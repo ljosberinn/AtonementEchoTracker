@@ -5,9 +5,19 @@
 ## DefaultState: Enabled
 ## IconTexture: Interface\Icons\ability_priest_atonement
 ## Category: Combat
-## SavedVariables: AtonementEchoTracker
+## SavedVariables: AtonementEchoTrackerSaved
 
-## X-Curse-Project-ID:
-## X-Wago-ID:
+## X-Curse-Project-ID: 1492596
+## X-Wago-ID: E6gv84N1
 
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibEditMode\embed.xml
+Libs\LibSharedMedia-3.0\lib.xml
+
+Enum.lua
 Init.lua
+
+Settings.lua
+EditMode.lua
+Driver.lua

@@ -1,11 +1,14 @@
----@type string, table
+---@type string, AtonementEchoTracker
 local addonName, Private = ...
 
 Private.L = {}
 
 Private.EventRegistry = CreateFromMixins(CallbackRegistryMixin)
 Private.EventRegistry:OnLoad()
-Private.EventRegistry:GenerateCallbackEvents({ Private.Enum.Events.SETTING_CHANGED })
+Private.EventRegistry:GenerateCallbackEvents({
+	Private.Enum.Events.SETTING_CHANGED,
+	Private.Enum.Events.EDIT_MODE_POSITION_CHANGED,
+})
 
 Private.LoginFnQueue = {}
 
@@ -15,17 +18,17 @@ EventUtil.ContinueOnAddOnLoaded(addonName, function()
 		return
 	end
 
-	-- ---@type EssencesSaved
-	-- EssencesSaved = EssencesSaved or {}
-	-- EssencesSaved.Settings = EssencesSaved.Settings or {}
+	---@type AtonementEchoTrackerSaved
+	AtonementEchoTrackerSaved = AtonementEchoTrackerSaved or {}
+	AtonementEchoTrackerSaved.Settings = AtonementEchoTrackerSaved.Settings or {}
 
-	-- local defaults = Private.Settings.GetDefaultSettings()
+	local defaults = Private.Settings.GetDefaultSettings()
 
-	-- for key, value in pairs(defaults) do
-	-- 	if EssencesSaved.Settings[key] == nil then
-	-- 		EssencesSaved.Settings[key] = value
-	-- 	end
-	-- end
+	for key, value in pairs(defaults) do
+		if AtonementEchoTrackerSaved.Settings[key] == nil then
+			AtonementEchoTrackerSaved.Settings[key] = value
+		end
+	end
 
 	for i = 1, #Private.LoginFnQueue do
 		Private.LoginFnQueue[i]()

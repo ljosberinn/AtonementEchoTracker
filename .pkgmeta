@@ -1,0 +1,10 @@
+ignore:
+
+- Types.lua
+- .vscode
+- .context
+- README.md
+- CHANGELOG.md
+  manual-changelog:
+  filename: CHANGELOG.md
+  markuptype: markdown
