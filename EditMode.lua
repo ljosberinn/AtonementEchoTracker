@@ -202,6 +202,28 @@ function Private.SetupEditMode(editModeParentFrame)
 			}
 		end
 
+		if key == Private.Settings.Keys.ShowFractions then
+			local function Get(_)
+				return AtonementEchoTrackerSaved.Settings.ShowFractions
+			end
+
+			local function Set(_, value)
+				if AtonementEchoTrackerSaved.Settings.ShowFractions ~= value then
+					AtonementEchoTrackerSaved.Settings.ShowFractions = value
+					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, value)
+				end
+			end
+
+			---@type LibEditModeCheckbox
+			return {
+				name = "Show Duration Fractions",
+				kind = Enum.EditModeSettingDisplayType.Checkbox,
+				default = defaults.ShowFractions,
+				get = Get,
+				set = Set,
+			}
+		end
+
 		if key == Private.Settings.Keys.Opacity then
 			local sliderSettings = Private.Settings.GetSliderSettingsForKey(key)
 

@@ -360,10 +360,11 @@ function AtonementEchoTracker:OnFrameEvent(a, event, ...)
 		end
 	elseif event == Private.Enum.Events.EDIT_MODE_POSITION_CHANGED then
 		local _, _, point, x, y = ...
-		local pos = AtonementEchoTrackerSaved.Settings.Position
-		pos.point = point
-		pos.x = x
-		pos.y = y
+
+		AtonementEchoTrackerSaved.Settings.Position.point = point
+		AtonementEchoTrackerSaved.Settings.Position.x = x
+		AtonementEchoTrackerSaved.Settings.Position.y = y
+
 		self:ApplyPosition()
 	end
 end
