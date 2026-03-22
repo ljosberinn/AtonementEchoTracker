@@ -11,7 +11,6 @@ local enabledAuras = {
 }
 
 function AtonementEchoTracker:Init()
-	self.contentType = Private.Enum.ContentType.OpenWorld
 	self.specId = PlayerUtil.GetCurrentSpecID()
 	self.auraIds = enabledAuras[self.specId]
 	self.activeInstances = {}
@@ -67,14 +66,16 @@ function AtonementEchoTracker:Init()
 		self.frame:Show()
 	end)
 	LibEditMode:RegisterCallback("exit", function()
-		if self:IsRelevantSpec() then
+		if not self:LoadConditionsProhibitExecution() then
 			self:UpdateDisplay()
 		else
 			self.frame:Hide()
 		end
 	end)
 
-	if self:IsRelevantSpec() then
+	self:UpdateContentType()
+
+	if not self:LoadConditionsProhibitExecution() then
 		self:Enable()
 	end
 
@@ -83,6 +84,50 @@ end
 
 function AtonementEchoTracker:IsRelevantSpec()
 	return enabledAuras[self.specId] ~= nil
+end
+
+function AtonementEchoTracker:UpdateContentType()
+	local _, instanceType, difficultyId = GetInstanceInfo()
+	local nextContentType = Private.Enum.ContentType.OpenWorld
+
+	if instanceType == "raid" then
+		nextContentType = Private.Enum.ContentType.Raid
+	elseif instanceType == "party" then
+		if
+			difficultyId == DifficultyUtil.ID.DungeonTimewalker
+			or difficultyId == DifficultyUtil.ID.DungeonNormal
+			or difficultyId == DifficultyUtil.ID.DungeonHeroic
+			or difficultyId == DifficultyUtil.ID.DungeonMythic
+			or difficultyId == DifficultyUtil.ID.DungeonChallenge
+			or difficultyId == 205 -- follower dungeons
+		then
+			nextContentType = Private.Enum.ContentType.Dungeon
+		end
+	elseif instanceType == "pvp" then
+		nextContentType = Private.Enum.ContentType.Battleground
+	elseif instanceType == "arena" then
+		nextContentType = Private.Enum.ContentType.Arena
+	elseif instanceType == "scenario" then
+		if difficultyId == 208 then
+			nextContentType = Private.Enum.ContentType.Delve
+		end
+	end
+
+	self.contentType = nextContentType
+end
+
+function AtonementEchoTracker:LoadConditionsProhibitExecution()
+	if not self:IsRelevantSpec() then
+		print("not a relevant spec")
+		return true
+	end
+
+	if not AtonementEchoTrackerSaved.Settings.LoadConditionContentType[self.contentType] then
+		print("not a relevant content type")
+		return true
+	end
+
+	return false
 end
 
 function AtonementEchoTracker:OnListenerEvent(_self, event, ...)
@@ -150,7 +195,11 @@ function AtonementEchoTracker:Disable()
 		frame:UnregisterAllEvents()
 	end
 
-	self.frame:Hide()
+	local LibEditMode = LibStub("LibEditMode")
+
+	if not LibEditMode:IsInEditMode() then
+		self.frame:Hide()
+	end
 end
 
 function AtonementEchoTracker:ApplyPosition()
@@ -336,6 +385,12 @@ function AtonementEchoTracker:OnSettingsChanged(key, value)
 		self:ApplyMask()
 	elseif key == Keys.StackCountAnchor or key == Keys.StackCountOffsetX or key == Keys.StackCountOffsetY then
 		self:ApplyStackCountAnchor()
+	elseif key == Keys.LoadConditionContentType then
+		if not self:LoadConditionsProhibitExecution() then
+			self:Enable()
+		else
+			self:Disable()
+		end
 	end
 end
 
@@ -476,45 +531,13 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 		or event == "PLAYER_SPECIALIZATION_CHANGED"
 		or event == "UPDATE_INSTANCE_INFO"
 	then
-		local _, instanceType, difficultyId = GetInstanceInfo()
-		-- equivalent to `instanceType == "none"`
-		local nextContentType = Private.Enum.ContentType.OpenWorld
-
-		if instanceType == "raid" then
-			nextContentType = Private.Enum.ContentType.Raid
-		elseif instanceType == "party" then
-			if
-				difficultyId == DifficultyUtil.ID.DungeonTimewalker
-				or difficultyId == DifficultyUtil.ID.DungeonNormal
-				or difficultyId == DifficultyUtil.ID.DungeonHeroic
-				or difficultyId == DifficultyUtil.ID.DungeonMythic
-				or difficultyId == DifficultyUtil.ID.DungeonChallenge
-				or difficultyId == 205 -- follower dungeons
-			then
-				nextContentType = Private.Enum.ContentType.Dungeon
-			end
-		elseif instanceType == "pvp" then
-			nextContentType = Private.Enum.ContentType.Battleground
-		elseif instanceType == "arena" then
-			nextContentType = Private.Enum.ContentType.Arena
-		elseif instanceType == "scenario" then
-			if difficultyId == 208 then
-				nextContentType = Private.Enum.ContentType.Delve
-			end
-		end
-
-		self.contentType = nextContentType
+		self:UpdateContentType()
 
 		local specId = PlayerUtil.GetCurrentSpecID()
-
-		if specId == self.specId then
-			return
-		end
-
 		self.specId = specId
 		self.auraIds = enabledAuras[self.specId]
 
-		if self:IsRelevantSpec() then
+		if not self:LoadConditionsProhibitExecution() then
 			self:Enable()
 		else
 			self:Disable()

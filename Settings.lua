@@ -114,8 +114,20 @@ function Private.Settings.GetBorderOptions()
 	return borders
 end
 
+function Private.Settings.GetContentTypeLabels()
+	return {
+		[Private.Enum.ContentType.OpenWorld] = "Open World",
+		[Private.Enum.ContentType.Delve] = "Delve",
+		[Private.Enum.ContentType.Dungeon] = "Dungeon",
+		[Private.Enum.ContentType.Raid] = "Raid",
+		[Private.Enum.ContentType.Arena] = "Arena",
+		[Private.Enum.ContentType.Battleground] = "Battleground",
+	}
+end
+
 function Private.Settings.GetDisplayOrder()
 	return {
+		Private.Settings.Keys.LoadConditionContentType,
 		Private.Settings.Keys.Width,
 		Private.Settings.Keys.Height,
 		Private.Settings.Keys.Opacity,

@@ -7,6 +7,57 @@ function Private.SetupEditMode(editModeParentFrame)
 	local LibSharedMedia = LibStub("LibSharedMedia-3.0")
 
 	local function CreateSetting(key, defaults)
+		if key == Private.Settings.Keys.LoadConditionContentType then
+			local labels = Private.Settings.GetContentTypeLabels()
+
+			local function Generator(_, rootDescription)
+				for id, label in pairs(labels) do
+					local function IsEnabled()
+						return AtonementEchoTrackerSaved.Settings.LoadConditionContentType[id]
+					end
+
+					local function Toggle()
+						AtonementEchoTrackerSaved.Settings.LoadConditionContentType[id] =
+							not AtonementEchoTrackerSaved.Settings.LoadConditionContentType[id]
+						Private.EventRegistry:TriggerEvent(
+							Private.Enum.Events.SETTING_CHANGED,
+							key,
+							AtonementEchoTrackerSaved.Settings.LoadConditionContentType
+						)
+					end
+
+					rootDescription:CreateCheckbox(label, IsEnabled, Toggle, { value = label, multiple = true })
+				end
+			end
+
+			local function Set(_, values)
+				local hasChanges = false
+				for id, bool in pairs(values) do
+					if AtonementEchoTrackerSaved.Settings.LoadConditionContentType[id] ~= bool then
+						AtonementEchoTrackerSaved.Settings.LoadConditionContentType[id] = bool
+						hasChanges = true
+					end
+				end
+				if hasChanges then
+					Private.EventRegistry:TriggerEvent(
+						Private.Enum.Events.SETTING_CHANGED,
+						key,
+						AtonementEchoTrackerSaved.Settings.LoadConditionContentType
+					)
+				end
+			end
+
+			---@type LibEditModeDropdown
+			return {
+				name = "Load Conditions",
+				desc = "Content types in which the tracker is active.",
+				kind = Enum.EditModeSettingDisplayType.Dropdown,
+				default = defaults.LoadConditionContentType,
+				generator = Generator,
+				set = Set,
+			}
+		end
+
 		if key == Private.Settings.Keys.Width then
 			local sliderSettings = Private.Settings.GetSliderSettingsForKey(key)
 

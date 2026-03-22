@@ -42,6 +42,7 @@
 ---@field GetDisplayOrder fun(): string[]
 ---@field GetSliderSettingsForKey fun(key: string): SliderSettings
 ---@field GetBorderOptions fun(): string[]
+---@field GetContentTypeLabels fun(): table<number, string>
 ---@field GetDefaultStates fun(): string[]
 ---@field GetStackCountAnchors fun(): string[]
 
