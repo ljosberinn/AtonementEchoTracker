@@ -65,6 +65,8 @@
 ---@field ShowFractions boolean
 ---@field HideMask boolean
 ---@field StackCountAnchor string
+---@field StackCountOffsetX number
+---@field StackCountOffsetY number
 ---@field Position FramePosition
 
 ---@class FramePosition

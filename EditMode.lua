@@ -442,6 +442,60 @@ function Private.SetupEditMode(editModeParentFrame)
 			}
 		end
 
+		if key == Private.Settings.Keys.StackCountOffsetX then
+			local sliderSettings = Private.Settings.GetSliderSettingsForKey(key)
+
+			local function Get(_)
+				return AtonementEchoTrackerSaved.Settings.StackCountOffsetX
+			end
+
+			local function Set(_, value)
+				if AtonementEchoTrackerSaved.Settings.StackCountOffsetX ~= value then
+					AtonementEchoTrackerSaved.Settings.StackCountOffsetX = value
+					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, value)
+				end
+			end
+
+			---@type LibEditModeSlider
+			return {
+				name = "Stack Count Offset X",
+				kind = Enum.EditModeSettingDisplayType.Slider,
+				default = defaults.StackCountOffsetX,
+				get = Get,
+				set = Set,
+				minValue = sliderSettings.min,
+				maxValue = sliderSettings.max,
+				valueStep = sliderSettings.step,
+			}
+		end
+
+		if key == Private.Settings.Keys.StackCountOffsetY then
+			local sliderSettings = Private.Settings.GetSliderSettingsForKey(key)
+
+			local function Get(_)
+				return AtonementEchoTrackerSaved.Settings.StackCountOffsetY
+			end
+
+			local function Set(_, value)
+				if AtonementEchoTrackerSaved.Settings.StackCountOffsetY ~= value then
+					AtonementEchoTrackerSaved.Settings.StackCountOffsetY = value
+					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, value)
+				end
+			end
+
+			---@type LibEditModeSlider
+			return {
+				name = "Stack Count Offset Y",
+				kind = Enum.EditModeSettingDisplayType.Slider,
+				default = defaults.StackCountOffsetY,
+				get = Get,
+				set = Set,
+				minValue = sliderSettings.min,
+				maxValue = sliderSettings.max,
+				valueStep = sliderSettings.step,
+			}
+		end
+
 		error(string.format("CreateSetting: no widget defined for key '%s'", key or "nil"))
 	end
 

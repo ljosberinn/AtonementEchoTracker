@@ -21,6 +21,8 @@ Private.Settings.Keys = {
 	ShowFractions = "SHOW_FRACTIONS",
 	HideMask = "HIDE_MASK",
 	StackCountAnchor = "STACK_COUNT_ANCHOR",
+	StackCountOffsetX = "STACK_COUNT_OFFSET_X",
+	StackCountOffsetY = "STACK_COUNT_OFFSET_Y",
 }
 
 ---@return AtonementEchoTrackerSavedSettings
@@ -52,6 +54,8 @@ function Private.Settings.GetDefaultSettings()
 		ShowFractions = false,
 		HideMask = false,
 		StackCountAnchor = Private.Enum.StackCountAnchor.BottomRight,
+		StackCountOffsetX = 0,
+		StackCountOffsetY = 0,
 		Position = { point = "CENTER", x = 0, y = 0 },
 	}
 end
@@ -73,6 +77,10 @@ function Private.Settings.GetSliderSettingsForKey(key)
 
 	if key == Private.Settings.Keys.IconZoom then
 		return { min = 0, max = 0.5, step = 0.01 }
+	end
+
+	if key == Private.Settings.Keys.StackCountOffsetX or key == Private.Settings.Keys.StackCountOffsetY then
+		return { min = -200, max = 200, step = 1 }
 	end
 
 	error(string.format("GetSliderSettingsForKey: no slider settings defined for key '%s'", key or "nil"))
@@ -117,6 +125,8 @@ function Private.Settings.GetDisplayOrder()
 		Private.Settings.Keys.DurationFontSize,
 		Private.Settings.Keys.StackFontSize,
 		Private.Settings.Keys.StackCountAnchor,
+		Private.Settings.Keys.StackCountOffsetX,
+		Private.Settings.Keys.StackCountOffsetY,
 		Private.Settings.Keys.DefaultState,
 		Private.Settings.Keys.HideMask,
 		Private.Settings.Keys.ShowFractions,

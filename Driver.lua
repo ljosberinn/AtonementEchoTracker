@@ -273,7 +273,13 @@ function AtonementEchoTracker:ApplyStackCountAnchor()
 	end
 
 	self.frame.Cooldown.StackCount:ClearAllPoints()
-	self.frame.Cooldown.StackCount:SetPoint(anchor)
+	self.frame.Cooldown.StackCount:SetPoint(
+		anchor,
+		self.frame.Cooldown,
+		anchor,
+		AtonementEchoTrackerSaved.Settings.StackCountOffsetX,
+		AtonementEchoTrackerSaved.Settings.StackCountOffsetY
+	)
 	self.frame.Cooldown.StackCount:SetJustifyH(justifyH)
 end
 
@@ -328,7 +334,7 @@ function AtonementEchoTracker:OnSettingsChanged(key, value)
 		self:UpdateDisplay()
 	elseif key == Keys.HideMask then
 		self:ApplyMask()
-	elseif key == Keys.StackCountAnchor then
+	elseif key == Keys.StackCountAnchor or key == Keys.StackCountOffsetX or key == Keys.StackCountOffsetY then
 		self:ApplyStackCountAnchor()
 	end
 end
