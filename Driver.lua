@@ -118,12 +118,10 @@ end
 
 function AtonementEchoTracker:LoadConditionsProhibitExecution()
 	if not self:IsRelevantSpec() then
-		print("not a relevant spec")
 		return true
 	end
 
 	if not AtonementEchoTrackerSaved.Settings.LoadConditionContentType[self.contentType] then
-		print("not a relevant content type")
 		return true
 	end
 
