@@ -330,16 +330,16 @@ function AtonementEchoTracker:UpdateDisplay()
 			self.frame:Show()
 		end
 	else
-		local nextExpiry = nil
+		local nextExpiringInstance = nil
 
 		for _, instance in ipairs(self.activeInstances) do
-			if nextExpiry == nil or instance.expirationTime < nextExpiry then
-				nextExpiry = instance.expirationTime
+			if nextExpiringInstance == nil or instance.expirationTime < nextExpiringInstance then
+				nextExpiringInstance = instance
 			end
 		end
 
 		local duration = C_DurationUtil.CreateDuration()
-		duration:SetTimeFromEnd(nextExpiry, GetTime())
+		duration:SetTimeFromEnd(nextExpiringInstance.expirationTime, nextExpiringInstance.duration)
 		self.activeDuration = duration
 		self.frame.Cooldown:SetCooldownFromDurationObject(duration, true)
 		self.frame.Cooldown.StackCount:SetText(tostring(activeCount))
@@ -349,7 +349,7 @@ function AtonementEchoTracker:UpdateDisplay()
 	end
 end
 
-function AtonementEchoTracker:OnFrameEvent(a, event, ...)
+function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 	if event == "UNIT_AURA" then
 		---@type string, UnitAuraUpdateInfo
 		local unit, updateInfo = ...
@@ -368,6 +368,7 @@ function AtonementEchoTracker:OnFrameEvent(a, event, ...)
 					table.insert(self.activeInstances, {
 						auraInstanceId = aura.auraInstanceID,
 						expirationTime = aura.expirationTime,
+						duration = aura.duration,
 						unit = unit,
 					})
 					self:UpdateDisplay()

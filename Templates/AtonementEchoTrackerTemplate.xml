@@ -34,8 +34,8 @@
       <Cooldown
         parentKey="Cooldown"
         setAllPoints="true"
-        drawSwipe="true"
         minimumCountdownDuration="0"
+        reverse="true"
       >
         <SwipeTexture file="Interface\HUD\UI-HUD-CoolDownManager-Icon-Swipe">
           <Color r="0" g="0" b="0" a="0.7" />
