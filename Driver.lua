@@ -27,9 +27,6 @@ function AtonementEchoTracker:Init()
 	self.frame:RegisterEvent("UPDATE_INSTANCE_INFO")
 	self.frame:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", "player")
 
-	self.border = CreateFrame("Frame", nil, self.frame, "BackdropTemplate")
-	self.border:SetAllPoints()
-
 	self:ApplySettings()
 	self:UpdateDisplay()
 
@@ -85,7 +82,7 @@ function AtonementEchoTracker:Init()
 end
 
 function AtonementEchoTracker:IsRelevantSpec()
-	return self.specId == 1468 or self.specId == 256
+	return enabledAuras[self.specId] ~= nil
 end
 
 function AtonementEchoTracker:OnListenerEvent(_self, event, ...)
@@ -263,12 +260,11 @@ end
 
 function AtonementEchoTracker:ApplyBorderStyle()
 	local LibSharedMedia = LibStub("LibSharedMedia-3.0")
-	local style = AtonementEchoTrackerSaved.Settings.BorderStyle
-	local path = LibSharedMedia:Fetch(LibSharedMedia.MediaType.BORDER, style)
+	local path = LibSharedMedia:Fetch(LibSharedMedia.MediaType.BORDER, AtonementEchoTrackerSaved.Settings.BorderStyle)
 	if path then
-		self.border:SetBackdrop({ edgeFile = path, edgeSize = 8 })
+		self.frame.Border:SetBackdrop({ edgeFile = path, edgeSize = 8 })
 	else
-		self.border:SetBackdrop(nil)
+		self.frame.Border:SetBackdrop(nil)
 	end
 end
 

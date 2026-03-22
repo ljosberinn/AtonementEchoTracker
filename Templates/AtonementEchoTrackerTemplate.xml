@@ -29,6 +29,7 @@
       </Layer>
     </Layers>
     <Frames>
+      <Frame parentKey="Border" setAllPoints="true" inherits="BackdropTemplate" />
       <Cooldown
         parentKey="Cooldown"
         setAllPoints="true"

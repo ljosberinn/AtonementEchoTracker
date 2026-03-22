@@ -24,6 +24,7 @@
 ---@field Icon Texture
 ---@field Mask MaskTexture
 ---@field Overlay Texture
+---@field Border Frame|BackdropTemplate
 ---@field Cooldown AtonementEchoTrackerCooldown
 
 ---@class AtonementEchoTrackerSettings
