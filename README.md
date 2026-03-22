@@ -1,12 +1,19 @@
 # Atonement / Echo Tracker
 
-... that also tracks Rejuvation on Restoration Druid.
+[![](https://img.shields.io/badge/patreon-red?logo=patreon&style=for-the-badge)](https://www.patreon.com/cw/warcraftlogs)
+
+- [Curseforge](https://www.curseforge.com/wow/addons/atonementechotracker)
+- [Wago](https://addons.wago.io/addons/atonementechotracker)
+
+... that also tracks Rejuvation on Restoration Druid but it's too late to rename.
 
 ## What It Does
 
 Shows an icon with the next expiration time of whichever hot you provide.
 
 Additionally renders the amount of players its applied to.
+
+Does not load on any other class, automatically disables itself when you change specs.
 
 ## Features
 
