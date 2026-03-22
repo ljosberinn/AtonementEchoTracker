@@ -4,7 +4,7 @@ local addonName, Private = ...
 local AtonementEchoTracker = {}
 
 local enabledAuras = {
-	[1468] = 194384, -- preservation: echo
+	[1468] = 364343, -- preservation: echo
 	[256] = 194384, -- discipline: atonement
 }
 
@@ -16,38 +16,103 @@ function AtonementEchoTracker:Init()
 
 	Private.EventRegistry:RegisterCallback(Private.Enum.Events.SETTING_CHANGED, self.OnSettingsChanged, self)
 
-	self:SetupFrame(true)
+	self.frame = CreateFrame("Frame", "AtonementEchoTracker", UIParent, "AtonementEchoTrackerTemplate")
+	self.frame.Cooldown:SetUseAuraDisplayTime(true)
+	self.frame:SetSize(AtonementEchoTrackerSaved.Settings.Width, AtonementEchoTrackerSaved.Settings.Height)
+	self.frame:SetPoint("CENTER", UIParent, "CENTER")
+	self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+	self.frame:RegisterEvent("LOADING_SCREEN_DISABLED")
+	self.frame:RegisterEvent("UPDATE_INSTANCE_INFO")
+	self.frame:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", "player")
+
+	if AtonementEchoTrackerSaved.Settings.DefaultState == Private.Enum.DefaultState.Hidden then
+		self.frame:Hide()
+	else
+		self.frame.Icon:SetDesaturated(true)
+		self.frame:Show()
+	end
+
+	Private.EventRegistry:RegisterCallback(
+		Private.Enum.Events.EDIT_MODE_POSITION_CHANGED,
+		self.OnFrameEvent,
+		self,
+		self.frame,
+		Private.Enum.Events.EDIT_MODE_POSITION_CHANGED
+		-- the remaining args are being passed when the event gets triggered
+	)
+
+	self.listenerFrames = {
+		party = {},
+		raid = {},
+	}
+
+	local callback = GenerateClosure(self.OnListenerEvent, self)
+
+	for i = 1, math.ceil(5 / 4) do
+		local frame = CreateFrame("Frame", "AtonementEchoTrackerPartyListener" .. i, UIParent)
+		frame:SetScript("OnEvent", callback)
+		table.insert(self.listenerFrames.party, frame)
+	end
+
+	local perFrame = 4
+	for i = 1, math.ceil(30 / perFrame) do
+		local frame = CreateFrame("Frame", "AtonementEchoTrackerRaidListener" .. i, UIParent)
+		frame:SetScript("OnEvent", callback)
+		table.insert(self.listenerFrames.raid, frame)
+	end
+
+	Private.SetupEditMode(self.frame)
+
+	if self:IsRelevantSpec() then
+		self:Enable()
+	end
+
+	self.frame:SetScript("OnEvent", GenerateClosure(self.OnFrameEvent, self))
 end
 
 function AtonementEchoTracker:IsRelevantSpec()
 	return self.specId == 1468 or self.specId == 256
 end
 
-function AtonementEchoTracker:OnListenerEvent(_, event, ...)
-	self.frame:OnEvent(self, event, ...)
+function AtonementEchoTracker:OnListenerEvent(_self, event, ...)
+	self:OnFrameEvent(self, event, ...)
 end
 
 function AtonementEchoTracker:Enable()
-	self.listenerFrames.party:RegisterUnitEvent("UNIT_AURA", "player")
-	for i = 1, 4 do
-		self.listenerFrames.party:RegisterUnitEvent("UNIT_AURA", "party" .. i)
-		print("registered", "party" .. i)
+	self:SetIcon()
+
+	local partyTokens = {}
+	for i = 1, 5 do
+		local index = math.ceil(i / 4)
+		if partyTokens[index] == nil then
+			partyTokens[index] = {}
+		end
+		table.insert(partyTokens[index], i == 5 and "player" or "party" .. i)
 	end
 
-	for index, frame in ipairs(self.listenerFrames.raid) do
-		for i = index, index + 4 do
-			if i > 30 then
-				break
-			end
+	for index, tokens in ipairs(partyTokens) do
+		self.listenerFrames.party[index]:RegisterUnitEvent("UNIT_AURA", unpack(tokens))
+	end
 
-			frame:RegisterUnitEvent("UNIT_AURA", "raid" .. i)
-			print("registered", "raid" .. i)
+	local raidTokens = {}
+	for i = 1, 30 do
+		local index = math.ceil(i / 4)
+		if raidTokens[index] == nil then
+			raidTokens[index] = {}
 		end
+		table.insert(raidTokens[index], "raid" .. i)
+	end
+
+	for index, tokens in ipairs(raidTokens) do
+		self.listenerFrames.raid[index]:RegisterUnitEvent("UNIT_AURA", unpack(tokens))
 	end
 end
 
 function AtonementEchoTracker:Disable()
-	self.listenerFrames.party:UnregisterAllEvents()
+	for _, frame in ipairs(self.listenerFrames.party) do
+		frame:UnregisterAllEvents()
+	end
+
 	for _, frame in ipairs(self.listenerFrames.raid) do
 		frame:UnregisterAllEvents()
 	end
@@ -55,56 +120,19 @@ end
 
 function AtonementEchoTracker:OnSettingsChanged(key, value) end
 
-function AtonementEchoTracker:SetupFrame(isBoot)
-	if isBoot then
-		self.frame = CreateFrame("Cooldown", "AtonementEchoTracker", UIParent)
-		self.frame.StackCount = self.frame:CreateFontString("StackCount", "OVERLAY")
-		Private.EventRegistry:RegisterCallback(
-			Private.Enum.Events.EDIT_MODE_POSITION_CHANGED,
-			self.OnFrameEvent,
-			self,
-			self.frame,
-			Private.Enum.Events.EDIT_MODE_POSITION_CHANGED
-			-- the remaining args are being passed when the event gets triggered
-		)
-
-		self.listenerFrames = {
-			party = CreateFrame("Frame", "AtonementEchoTrackerPartyListener", UIParent),
-			raid = {},
-		}
-
-		local raidTokens = 30
-		local perFrame = 4
-		for i = 1, math.ceil(raidTokens / perFrame) do
-			local frame = CreateFrame("Frame", "AtonementEchoTrackerRaidListener" .. i, UIParent)
-			table.insert(self.listenerFrames.raid, frame)
-		end
-
-		Private.SetupEditMode(self.frame)
-	else
-		self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-		self.frame:RegisterEvent("LOADING_SCREEN_DISABLED")
-		self.frame:RegisterEvent("UPDATE_INSTANCE_INFO")
-		self.frame:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", "player")
-
-		if self:IsRelevantSpec() then
-			self:Enable()
-		end
-
-		self.frame:SetScript("OnEvent", GenerateClosure(self.OnFrameEvent, self))
-	end
-end
-
 function AtonementEchoTracker:UpdateDisplay()
 	local activeCount = #self.activeInstances
 
+	print("active count is", activeCount)
+
 	if activeCount == 0 then
-		self.frame.StackCount:SetText(0)
+		self.frame.Cooldown.StackCount:SetText(0)
+		self.frame.Cooldown:Clear()
 
 		if AtonementEchoTrackerSaved.Settings.DefaultState == Private.Enum.DefaultState.Hidden then
 			self.frame:Hide()
 		else
-			-- todo: desaturation
+			self.frame.Icon:SetDesaturated(true)
 			self.frame:Show()
 		end
 	else
@@ -118,19 +146,21 @@ function AtonementEchoTracker:UpdateDisplay()
 
 		local duration = C_DurationUtil.CreateDuration()
 		duration:SetTimeFromEnd(nextExpiry, GetTime())
-		self.frame:SetCooldownFromDurationObject(duration)
-		self.frame.StackCount:SetText(activeCount)
-		-- todo: clear desaturation
+		self.frame.Cooldown:SetCooldownFromDurationObject(duration)
+		self.frame.Cooldown.StackCount:SetText(activeCount)
+		self.frame.Icon:SetDesaturated(false)
 		self.frame:Show()
 	end
 end
 
-function AtonementEchoTracker:OnFrameEvent(_, event, ...)
+function AtonementEchoTracker:SetIcon()
+	self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(self.auraId))
+end
+
+function AtonementEchoTracker:OnFrameEvent(a, event, ...)
 	if event == "UNIT_AURA" then
 		---@type string, UnitAuraUpdateInfo
 		local unit, updateInfo = ...
-
-		print(unit, updateInfo ~= nil)
 
 		if updateInfo.isFullUpdate or updateInfo.addedAuras ~= nil then
 			---@type AuraData[]
@@ -149,45 +179,40 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 						unit = unit,
 					})
 					self:UpdateDisplay()
-					return
+
+					break
 				end
 			end
-		elseif updateInfo.updatedAuraInstanceIDs then
+		end
+
+		if updateInfo.updatedAuraInstanceIDs then
 			local activeInstanceIndex = nil
 
 			for i, auraInfo in ipairs(self.activeInstances) do
 				if auraInfo.unit == unit then
 					activeInstanceIndex = i
+
 					break
 				end
 			end
 
-			if activeInstanceIndex == nil then
-				return
-			end
+			if activeInstanceIndex ~= nil then
+				for _, auraInstanceId in ipairs(updateInfo.updatedAuraInstanceIDs) do
+					if auraInstanceId == self.activeInstances[activeInstanceIndex].auraInstanceId then
+						local auraData = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceId)
 
-			for _, auraInstanceId in ipairs(updateInfo.updatedAuraInstanceIDs) do
-				if auraInstanceId == self.activeInstances[activeInstanceIndex].auraInstanceId then
-					local auraData = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceId)
+						if auraData ~= nil then
+							self.activeInstances[activeInstanceIndex].expirationTime = auraData.expirationTime
+							self:UpdateDisplay()
+						end
 
-					if auraData ~= nil then
-						print(
-							"updating",
-							unit,
-							auraInstanceId,
-							"to",
-							auraData.expirationTime,
-							"from",
-							self.activeInstances[activeInstanceIndex].expirationTime
-						)
-						self.activeInstances[activeInstanceIndex].expirationTime = auraData.expirationTime
-						self:UpdateDisplay()
+						break
 					end
-
-					return
 				end
 			end
-		elseif updateInfo.removedAuraInstanceIDs then
+		end
+
+		if updateInfo.removedAuraInstanceIDs then
 			local activeInstanceIndex = nil
 
 			for i, auraInfo in ipairs(self.activeInstances) do
@@ -197,15 +222,14 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 				end
 			end
 
-			if activeInstanceIndex == nil then
-				return
-			end
+			if activeInstanceIndex ~= nil then
+				for _, auraInstanceId in ipairs(updateInfo.removedAuraInstanceIDs) do
+					if auraInstanceId == self.activeInstances[activeInstanceIndex].auraInstanceId then
+						table.remove(self.activeInstances, activeInstanceIndex)
+						self:UpdateDisplay()
 
-			for _, auraInstanceId in ipairs(updateInfo.removedAuraInstanceIDs) do
-				if auraInstanceId == self.activeInstances[activeInstanceIndex].auraInstanceId then
-					table.remove(self.activeInstances, activeInstanceIndex)
-					self:UpdateDisplay()
-					return
+						break
+					end
 				end
 			end
 		end
@@ -253,6 +277,9 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 		if specId == self.specId then
 			return
 		end
+
+		self.specId = specId
+		self.auraId = enabledAuras[self.specId]
 
 		if self:IsRelevantSpec() then
 			self:Enable()
