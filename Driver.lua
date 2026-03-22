@@ -18,19 +18,16 @@ function AtonementEchoTracker:Init()
 
 	self.frame = CreateFrame("Frame", "AtonementEchoTracker", UIParent, "AtonementEchoTrackerTemplate")
 	self.frame.Cooldown:SetUseAuraDisplayTime(true)
-	self.frame:SetSize(AtonementEchoTrackerSaved.Settings.Width, AtonementEchoTrackerSaved.Settings.Height)
-	self.frame:SetPoint("CENTER", UIParent, "CENTER")
 	self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self.frame:RegisterEvent("LOADING_SCREEN_DISABLED")
 	self.frame:RegisterEvent("UPDATE_INSTANCE_INFO")
 	self.frame:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", "player")
 
-	if AtonementEchoTrackerSaved.Settings.DefaultState == Private.Enum.DefaultState.Hidden then
-		self.frame:Hide()
-	else
-		self.frame.Icon:SetDesaturated(true)
-		self.frame:Show()
-	end
+	self.border = CreateFrame("Frame", nil, self.frame, "BackdropTemplate")
+	self.border:SetAllPoints()
+
+	self:ApplySettings()
+	self:UpdateDisplay()
 
 	Private.EventRegistry:RegisterCallback(
 		Private.Enum.Events.EDIT_MODE_POSITION_CHANGED,
@@ -118,12 +115,87 @@ function AtonementEchoTracker:Disable()
 	end
 end
 
-function AtonementEchoTracker:OnSettingsChanged(key, value) end
+function AtonementEchoTracker:ApplyPosition()
+	local pos = AtonementEchoTrackerSaved.Settings.Position
+	self.frame:ClearAllPoints()
+	PixelUtil.SetPoint(self.frame, pos.point, UIParent, pos.point, pos.x, pos.y)
+end
+
+function AtonementEchoTracker:ApplySize()
+	self.frame:SetSize(AtonementEchoTrackerSaved.Settings.Width, AtonementEchoTrackerSaved.Settings.Height)
+end
+
+function AtonementEchoTracker:ApplyOpacity()
+	self.frame:SetAlpha(AtonementEchoTrackerSaved.Settings.Opacity)
+end
+
+function AtonementEchoTracker:ApplyIconZoom()
+	local zoom = AtonementEchoTrackerSaved.Settings.IconZoom
+	self.frame.Icon:SetTexCoord(zoom, 1 - zoom, zoom, 1 - zoom)
+end
+
+function AtonementEchoTracker:ApplyStackFont()
+	local s = AtonementEchoTrackerSaved.Settings
+	local flags = {}
+	if s.FontFlags[Private.Enum.FontFlags.OUTLINE] then
+		table.insert(flags, Private.Enum.FontFlags.OUTLINE)
+	end
+	if s.FontFlags[Private.Enum.FontFlags.SHADOW] then
+		table.insert(flags, Private.Enum.FontFlags.SHADOW)
+	end
+	self.frame.Cooldown.StackCount:SetFont(s.Font, s.StackFontSize, table.concat(flags, ","))
+end
+
+function AtonementEchoTracker:ApplyStackColor()
+	local color = CreateColorFromHexString(AtonementEchoTrackerSaved.Settings.StackColor)
+	self.frame.Cooldown.StackCount:SetTextColor(color:GetRGBA())
+end
+
+function AtonementEchoTracker:ApplyBorderStyle()
+	local LibSharedMedia = LibStub("LibSharedMedia-3.0")
+	local style = AtonementEchoTrackerSaved.Settings.BorderStyle
+	local path = LibSharedMedia:Fetch(LibSharedMedia.MediaType.BORDER, style)
+	if path then
+		self.border:SetBackdrop({ edgeFile = path, edgeSize = 8 })
+	else
+		self.border:SetBackdrop(nil)
+	end
+end
+
+function AtonementEchoTracker:ApplySettings()
+	self:ApplySize()
+	self:ApplyPosition()
+	self:ApplyOpacity()
+	self:ApplyIconZoom()
+	self:ApplyStackFont()
+	self:ApplyStackColor()
+	self:ApplyBorderStyle()
+end
+
+function AtonementEchoTracker:OnSettingsChanged(key, value)
+	if key == Private.Settings.Keys.Width or key == Private.Settings.Keys.Height then
+		self:ApplySize()
+	elseif key == Private.Settings.Keys.Opacity then
+		self:ApplyOpacity()
+	elseif key == Private.Settings.Keys.IconZoom then
+		self:ApplyIconZoom()
+	elseif
+		key == Private.Settings.Keys.Font
+		or key == Private.Settings.Keys.StackFontSize
+		or key == Private.Settings.Keys.FontFlags
+	then
+		self:ApplyStackFont()
+	elseif key == Private.Settings.Keys.StackColor then
+		self:ApplyStackColor()
+	elseif key == Private.Settings.Keys.BorderStyle then
+		self:ApplyBorderStyle()
+	elseif key == Private.Settings.Keys.DefaultState then
+		self:UpdateDisplay()
+	end
+end
 
 function AtonementEchoTracker:UpdateDisplay()
 	local activeCount = #self.activeInstances
-
-	print("active count is", activeCount)
 
 	if activeCount == 0 then
 		self.frame.Cooldown.StackCount:SetText(0)
@@ -287,7 +359,12 @@ function AtonementEchoTracker:OnFrameEvent(a, event, ...)
 			self:Disable()
 		end
 	elseif event == Private.Enum.Events.EDIT_MODE_POSITION_CHANGED then
-		-- todo
+		local _, _, point, x, y = ...
+		local pos = AtonementEchoTrackerSaved.Settings.Position
+		pos.point = point
+		pos.x = x
+		pos.y = y
+		self:ApplyPosition()
 	end
 end
 
