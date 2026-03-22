@@ -6,6 +6,7 @@ local AtonementEchoTracker = {}
 local enabledAuras = {
 	[1468] = 364343, -- preservation: echo
 	[256] = 194384, -- discipline: atonement
+	[105] = 774, -- restoration: rejuvenation
 }
 
 function AtonementEchoTracker:Init()
@@ -20,6 +21,7 @@ function AtonementEchoTracker:Init()
 	self.frame = CreateFrame("Frame", "AtonementEchoTracker", UIParent, "AtonementEchoTrackerTemplate")
 	self.frame.Cooldown:SetUseAuraDisplayTime(true)
 	self.frame.Cooldown:SetDrawSwipe(true)
+	self.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 	self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self.frame:RegisterEvent("LOADING_SCREEN_DISABLED")
 	self.frame:RegisterEvent("UPDATE_INSTANCE_INFO")
@@ -92,7 +94,7 @@ end
 
 function AtonementEchoTracker:Enable()
 	self:UpdateDisplay()
-	self:SetIcon()
+	self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(self.auraId))
 
 	local partyTokens = {}
 	for i = 1, 5 do
@@ -354,10 +356,6 @@ function AtonementEchoTracker:UpdateDisplay()
 	end
 end
 
-function AtonementEchoTracker:SetIcon()
-	self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(self.auraId))
-end
-
 function AtonementEchoTracker:OnFrameEvent(a, event, ...)
 	if event == "UNIT_AURA" then
 		---@type string, UnitAuraUpdateInfo
@@ -437,7 +435,11 @@ function AtonementEchoTracker:OnFrameEvent(a, event, ...)
 	elseif event == "ENCOUNTER_END" then
 		if IsInRaid() then
 			table.wipe(self.activeInstances)
+			self:UpdateDisplay()
 		end
+	elseif event == "GROUP_ROSTER_UPDATE" then
+		table.wipe(self.activeInstances)
+		self:UpdateDisplay()
 	elseif
 		event == "ZONE_CHANGED_NEW_AREA"
 		or event == "LOADING_SCREEN_DISABLED"

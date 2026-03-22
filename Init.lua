@@ -14,7 +14,11 @@ Private.LoginFnQueue = {}
 
 EventUtil.ContinueOnAddOnLoaded(addonName, function()
 	local class = select(3, UnitClass("player"))
-	if class ~= Constants.UICharacterClasses.Evoker and class ~= Constants.UICharacterClasses.Priest then
+	if
+		class ~= Constants.UICharacterClasses.Evoker
+		and class ~= Constants.UICharacterClasses.Priest
+		and class ~= Constants.UICharacterClasses.Druid
+	then
 		return
 	end
 
