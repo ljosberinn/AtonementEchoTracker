@@ -8,6 +8,7 @@
     name="AtonementEchoTrackerTemplate"
     virtual="true"
     enableMouse="false"
+    ignoreParentAlpha="true"
     propagateMouseInput="Both"
   >
     <Layers>
@@ -33,6 +34,7 @@
       <Cooldown
         parentKey="Cooldown"
         setAllPoints="true"
+        drawSwipe="true"
         minimumCountdownDuration="0"
       >
         <SwipeTexture file="Interface\HUD\UI-HUD-CoolDownManager-Icon-Swipe">

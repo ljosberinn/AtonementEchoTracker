@@ -20,7 +20,6 @@ function AtonementEchoTracker:Init()
 	---@type AtonementEchoTrackerFrame
 	self.frame = CreateFrame("Frame", "AtonementEchoTracker", UIParent, "AtonementEchoTrackerTemplate")
 	self.frame.Cooldown:SetUseAuraDisplayTime(true)
-	self.frame.Cooldown:SetDrawSwipe(true)
 	self.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 	self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self.frame:RegisterEvent("LOADING_SCREEN_DISABLED")
@@ -243,14 +242,12 @@ end
 
 function AtonementEchoTracker:ApplyStackCountAnchor()
 	local anchor = AtonementEchoTrackerSaved.Settings.StackCountAnchor
-	local justifyH
+	local justifyH = "CENTER"
 
 	if anchor == "TOPLEFT" or anchor == "LEFT" or anchor == "BOTTOMLEFT" then
 		justifyH = "LEFT"
 	elseif anchor == "TOPRIGHT" or anchor == "RIGHT" or anchor == "BOTTOMRIGHT" then
 		justifyH = "RIGHT"
-	else
-		justifyH = "CENTER"
 	end
 
 	self.frame.Cooldown.StackCount:ClearAllPoints()
@@ -344,7 +341,7 @@ function AtonementEchoTracker:UpdateDisplay()
 		local duration = C_DurationUtil.CreateDuration()
 		duration:SetTimeFromEnd(nextExpiry, GetTime())
 		self.activeDuration = duration
-		self.frame.Cooldown:SetCooldownFromDurationObject(duration)
+		self.frame.Cooldown:SetCooldownFromDurationObject(duration, true)
 		self.frame.Cooldown.StackCount:SetText(tostring(activeCount))
 		self.frame.Cooldown.DurationText:SetShown(AtonementEchoTrackerSaved.Settings.ShowFractions)
 		self.frame.Icon:SetDesaturated(false)

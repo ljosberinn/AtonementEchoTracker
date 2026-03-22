@@ -19,6 +19,7 @@ EventUtil.ContinueOnAddOnLoaded(addonName, function()
 		and class ~= Constants.UICharacterClasses.Priest
 		and class ~= Constants.UICharacterClasses.Druid
 	then
+		table.wipe(Private.LoginFnQueue)
 		return
 	end
 
