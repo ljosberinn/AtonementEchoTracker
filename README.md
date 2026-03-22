@@ -1,0 +1,2 @@
+- x y coords
+- load conditions

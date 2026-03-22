@@ -4,10 +4,19 @@
 ---@field Enum AtonementEchoTrackerEnums
 ---@field Settings AtonementEchoTrackerSettings
 ---@field EventRegistry CallbackRegistryMixin
----@field L table<string, table<string, string|nil>>
 ---@field LoginFnQueue function[]
 ---@field SetupEditMode fun(editModeParentFrame: Frame)
 
+---@class Driver
+---@field private auraIds table<number, boolean>
+---@field private specId number
+---@field private activeInstances table<number, ActiveAuraInstance>
+
+---@class ActiveAuraInstance
+---@field auraInstanceId number
+---@field expirationTime number
+---@field duration number
+---@field unit string
 
 ---@class AtonementEchoTrackerEnums
 ---@field Events table<string, string>

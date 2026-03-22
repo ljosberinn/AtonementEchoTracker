@@ -1,18 +1,19 @@
 ---@type string, AtonementEchoTracker
 local addonName, Private = ...
 
+---@class Driver
 local AtonementEchoTracker = {}
 
 local enabledAuras = {
-	[1468] = 364343, -- preservation: echo
-	[256] = 194384, -- discipline: atonement
-	[105] = 774, -- restoration: rejuvenation
+	[1468] = { [364343] = true }, -- preservation: echo
+	[256] = { [194384] = true }, -- discipline: atonement
+	[105] = { [774] = true, [155777] = true }, -- restoration: rejuvenation & reju (germination)
 }
 
 function AtonementEchoTracker:Init()
 	self.contentType = Private.Enum.ContentType.OpenWorld
 	self.specId = PlayerUtil.GetCurrentSpecID()
-	self.auraId = enabledAuras[self.specId]
+	self.auraIds = enabledAuras[self.specId]
 	self.activeInstances = {}
 
 	Private.EventRegistry:RegisterCallback(Private.Enum.Events.SETTING_CHANGED, self.OnSettingsChanged, self)
@@ -90,8 +91,21 @@ end
 
 function AtonementEchoTracker:Enable()
 	self:UpdateDisplay()
-	self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(self.auraId))
+	for auraId, enabled in pairs(self.auraIds) do
+		if enabled then
+			self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(auraId))
+			break
+		end
+	end
 
+	self:RegisterRaidEvents()
+
+	if not IsInRaid() then
+		self:RegisterPartyEvents()
+	end
+end
+
+function AtonementEchoTracker:RegisterPartyEvents()
 	local partyTokens = {}
 	for i = 1, 5 do
 		local index = math.ceil(i / 4)
@@ -104,7 +118,15 @@ function AtonementEchoTracker:Enable()
 	for index, tokens in ipairs(partyTokens) do
 		self.listenerFrames.party[index]:RegisterUnitEvent("UNIT_AURA", unpack(tokens))
 	end
+end
 
+function AtonementEchoTracker:UnregisterPartyEvents()
+	for _, frame in ipairs(self.listenerFrames.party) do
+		frame:UnregisterEvent("UNIT_AURA")
+	end
+end
+
+function AtonementEchoTracker:RegisterRaidEvents()
 	local raidTokens = {}
 	for i = 1, 30 do
 		local index = math.ceil(i / 4)
@@ -333,7 +355,7 @@ function AtonementEchoTracker:UpdateDisplay()
 		local nextExpiringInstance = nil
 
 		for _, instance in ipairs(self.activeInstances) do
-			if nextExpiringInstance == nil or instance.expirationTime < nextExpiringInstance then
+			if nextExpiringInstance == nil or instance.expirationTime < nextExpiringInstance.expirationTime then
 				nextExpiringInstance = instance
 			end
 		end
@@ -354,6 +376,11 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 		---@type string, UnitAuraUpdateInfo
 		local unit, updateInfo = ...
 
+		-- a bit unfortunate but this is already handled via raid tokens
+		if unit == "player" and IsInRaid() then
+			return
+		end
+
 		if updateInfo.isFullUpdate or updateInfo.addedAuras ~= nil then
 			---@type AuraData[]
 			local auras = updateInfo.addedAuras == nil and C_UnitAuras.GetUnitAuras(unit, "PLAYER|HELPFUL", nil)
@@ -363,7 +390,7 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 				if
 					not issecretvalue(aura.sourceUnit)
 					and aura.sourceUnit == "player"
-					and aura.spellId == self.auraId
+					and self.auraIds[aura.spellId]
 				then
 					table.insert(self.activeInstances, {
 						auraInstanceId = aura.auraInstanceID,
@@ -432,8 +459,11 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 			self:UpdateDisplay()
 		end
 	elseif event == "GROUP_ROSTER_UPDATE" then
-		table.wipe(self.activeInstances)
-		self:UpdateDisplay()
+		if IsInRaid() then
+			self:UnregisterPartyEvents()
+		else
+			self:RegisterPartyEvents()
+		end
 	elseif
 		event == "ZONE_CHANGED_NEW_AREA"
 		or event == "LOADING_SCREEN_DISABLED"
@@ -476,7 +506,7 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 		end
 
 		self.specId = specId
-		self.auraId = enabledAuras[self.specId]
+		self.auraIds = enabledAuras[self.specId]
 
 		if self:IsRelevantSpec() then
 			self:Enable()
