@@ -5,19 +5,22 @@ local _, Private = ...
 Private.Settings = {}
 
 Private.Settings.Keys = {
-	LoadConditionContentType = "LOAD_CONDITION_CONTENT_TYPE_SELF",
-	Width = "FRAME_WIDTH_SELF",
-	Height = "FRAME_HEIGHT_SELF",
-	DurationFontSize = "DURATION_FONT_SIZE_SELF",
-	StackFontSize = "STACK_FONT_SIZE_SELF",
-	DefaultState = "DEFAULT_STATE_SELF",
-	DurationColor = "DURATION_COLOR_SELF",
-	StackColor = "STACK_COLOR_SELF",
-	Opacity = "OPACITY_SELF",
-	IconZoom = "ICON_ZOOM_SELF",
-	Font = "FONT_SELF",
-	FontFlags = "FONT_FLAGS_SELF",
-	BorderStyle = "BORDER_STYLE_SELF",
+	LoadConditionContentType = "LOAD_CONDITION_CONTENT_TYPE",
+	Width = "FRAME_WIDTH",
+	Height = "FRAME_HEIGHT",
+	DurationFontSize = "DURATION_FONT_SIZE",
+	StackFontSize = "STACK_FONT_SIZE",
+	DefaultState = "DEFAULT_STATE",
+	DurationColor = "DURATION_COLOR",
+	StackColor = "STACK_COLOR",
+	Opacity = "OPACITY",
+	IconZoom = "ICON_ZOOM",
+	Font = "FONT",
+	FontFlags = "FONT_FLAGS",
+	BorderStyle = "BORDER_STYLE",
+	ShowFractions = "SHOW_FRACTIONS",
+	HideMask = "HIDE_MASK",
+	StackCountAnchor = "STACK_COUNT_ANCHOR",
 }
 
 ---@return AtonementEchoTrackerSavedSettings
@@ -45,7 +48,10 @@ function Private.Settings.GetDefaultSettings()
 			[Private.Enum.FontFlags.OUTLINE] = true,
 			[Private.Enum.FontFlags.SHADOW] = false,
 		},
-		BorderStyle = "Blizzard Tooltip Border",
+		BorderStyle = "None",
+		ShowFractions = false,
+		HideMask = false,
+		StackCountAnchor = Private.Enum.StackCountAnchor.BottomRight,
 		Position = { point = "CENTER", x = 0, y = 0 },
 	}
 end
@@ -54,11 +60,11 @@ end
 ---@return SliderSettings
 function Private.Settings.GetSliderSettingsForKey(key)
 	if key == Private.Settings.Keys.Width or key == Private.Settings.Keys.Height then
-		return { min = 8, max = 200, step = 1 }
+		return { min = 8, max = 400, step = 1 }
 	end
 
 	if key == Private.Settings.Keys.DurationFontSize or key == Private.Settings.Keys.StackFontSize then
-		return { min = 6, max = 64, step = 1 }
+		return { min = 6, max = 100, step = 1 }
 	end
 
 	if key == Private.Settings.Keys.Opacity then
@@ -79,6 +85,20 @@ function Private.Settings.GetDefaultStates()
 	}
 end
 
+function Private.Settings.GetStackCountAnchors()
+	return {
+		Private.Enum.StackCountAnchor.TopLeft,
+		Private.Enum.StackCountAnchor.Top,
+		Private.Enum.StackCountAnchor.TopRight,
+		Private.Enum.StackCountAnchor.Left,
+		Private.Enum.StackCountAnchor.Center,
+		Private.Enum.StackCountAnchor.Right,
+		Private.Enum.StackCountAnchor.BottomLeft,
+		Private.Enum.StackCountAnchor.Bottom,
+		Private.Enum.StackCountAnchor.BottomRight,
+	}
+end
+
 function Private.Settings.GetBorderOptions()
 	local LibSharedMedia = LibStub("LibSharedMedia-3.0")
 	local borders = CopyTable(LibSharedMedia:List(LibSharedMedia.MediaType.BORDER))
@@ -93,9 +113,13 @@ function Private.Settings.GetDisplayOrder()
 		Private.Settings.Keys.Opacity,
 		Private.Settings.Keys.IconZoom,
 		Private.Settings.Keys.Font,
+		Private.Settings.Keys.FontFlags,
 		Private.Settings.Keys.DurationFontSize,
 		Private.Settings.Keys.StackFontSize,
+		Private.Settings.Keys.StackCountAnchor,
 		Private.Settings.Keys.DefaultState,
+		Private.Settings.Keys.HideMask,
+		Private.Settings.Keys.ShowFractions,
 		Private.Settings.Keys.DurationColor,
 		Private.Settings.Keys.StackColor,
 		Private.Settings.Keys.BorderStyle,

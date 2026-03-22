@@ -16,8 +16,10 @@ function AtonementEchoTracker:Init()
 
 	Private.EventRegistry:RegisterCallback(Private.Enum.Events.SETTING_CHANGED, self.OnSettingsChanged, self)
 
+	---@type AtonementEchoTrackerFrame
 	self.frame = CreateFrame("Frame", "AtonementEchoTracker", UIParent, "AtonementEchoTrackerTemplate")
 	self.frame.Cooldown:SetUseAuraDisplayTime(true)
+	self.frame.Cooldown:SetDrawSwipe(true)
 	self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self.frame:RegisterEvent("LOADING_SCREEN_DISABLED")
 	self.frame:RegisterEvent("UPDATE_INSTANCE_INFO")
@@ -60,6 +62,19 @@ function AtonementEchoTracker:Init()
 
 	Private.SetupEditMode(self.frame)
 
+	local LibEditMode = LibStub("LibEditMode")
+
+	LibEditMode:RegisterCallback("enter", function()
+		self.frame:Show()
+	end)
+	LibEditMode:RegisterCallback("exit", function()
+		if self:IsRelevantSpec() then
+			self:UpdateDisplay()
+		else
+			self.frame:Hide()
+		end
+	end)
+
 	if self:IsRelevantSpec() then
 		self:Enable()
 	end
@@ -76,6 +91,7 @@ function AtonementEchoTracker:OnListenerEvent(_self, event, ...)
 end
 
 function AtonementEchoTracker:Enable()
+	self:UpdateDisplay()
 	self:SetIcon()
 
 	local partyTokens = {}
@@ -113,16 +129,31 @@ function AtonementEchoTracker:Disable()
 	for _, frame in ipairs(self.listenerFrames.raid) do
 		frame:UnregisterAllEvents()
 	end
+
+	self.frame:Hide()
 end
 
 function AtonementEchoTracker:ApplyPosition()
-	local pos = AtonementEchoTrackerSaved.Settings.Position
 	self.frame:ClearAllPoints()
-	PixelUtil.SetPoint(self.frame, pos.point, UIParent, pos.point, pos.x, pos.y)
+	PixelUtil.SetPoint(
+		self.frame,
+		AtonementEchoTrackerSaved.Settings.Position.point,
+		UIParent,
+		AtonementEchoTrackerSaved.Settings.Position.point,
+		AtonementEchoTrackerSaved.Settings.Position.x,
+		AtonementEchoTrackerSaved.Settings.Position.y
+	)
 end
 
 function AtonementEchoTracker:ApplySize()
-	self.frame:SetSize(AtonementEchoTrackerSaved.Settings.Width, AtonementEchoTrackerSaved.Settings.Height)
+	local width = AtonementEchoTrackerSaved.Settings.Width
+	local height = AtonementEchoTrackerSaved.Settings.Height
+
+	self.frame:SetSize(width, height)
+
+	self.frame.Overlay:ClearAllPoints()
+	PixelUtil.SetPoint(self.frame.Overlay, "TOPLEFT", self.frame, "TOPLEFT", -(0.15 * width), 0.15 * width)
+	PixelUtil.SetPoint(self.frame.Overlay, "BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", 0.15 * height, -(0.15 * height))
 end
 
 function AtonementEchoTracker:ApplyOpacity()
@@ -134,21 +165,98 @@ function AtonementEchoTracker:ApplyIconZoom()
 	self.frame.Icon:SetTexCoord(zoom, 1 - zoom, zoom, 1 - zoom)
 end
 
-function AtonementEchoTracker:ApplyStackFont()
-	local s = AtonementEchoTrackerSaved.Settings
+function AtonementEchoTracker:BuildFontFlags()
 	local flags = {}
-	if s.FontFlags[Private.Enum.FontFlags.OUTLINE] then
+
+	if AtonementEchoTrackerSaved.Settings.FontFlags[Private.Enum.FontFlags.OUTLINE] then
 		table.insert(flags, Private.Enum.FontFlags.OUTLINE)
 	end
-	if s.FontFlags[Private.Enum.FontFlags.SHADOW] then
+
+	if AtonementEchoTrackerSaved.Settings.FontFlags[Private.Enum.FontFlags.SHADOW] then
 		table.insert(flags, Private.Enum.FontFlags.SHADOW)
 	end
-	self.frame.Cooldown.StackCount:SetFont(s.Font, s.StackFontSize, table.concat(flags, ","))
+
+	return table.concat(flags, ",")
+end
+
+function AtonementEchoTracker:ApplyStackFont()
+	self.frame.Cooldown.StackCount:SetFont(
+		AtonementEchoTrackerSaved.Settings.Font,
+		AtonementEchoTrackerSaved.Settings.StackFontSize,
+		self:BuildFontFlags()
+	)
+end
+
+function AtonementEchoTracker:ApplyDurationFont()
+	local font = AtonementEchoTrackerSaved.Settings.Font
+	local size = AtonementEchoTrackerSaved.Settings.DurationFontSize
+	local flags = self:BuildFontFlags()
+
+	self.frame.Cooldown.DurationText:SetFont(font, size, flags)
+	self.frame.Cooldown:GetCountdownFontString():SetFont(font, size, flags)
 end
 
 function AtonementEchoTracker:ApplyStackColor()
-	local color = CreateColorFromHexString(AtonementEchoTrackerSaved.Settings.StackColor)
-	self.frame.Cooldown.StackCount:SetTextColor(color:GetRGBA())
+	self.frame.Cooldown.StackCount:SetTextColor(
+		CreateColorFromHexString(AtonementEchoTrackerSaved.Settings.StackColor):GetRGBA()
+	)
+end
+
+function AtonementEchoTracker:ApplyDurationColor()
+	self.frame.Cooldown.DurationText:SetTextColor(
+		CreateColorFromHexString(AtonementEchoTrackerSaved.Settings.DurationColor):GetRGBA()
+	)
+end
+
+function AtonementEchoTracker:SetShowFractions(showFractions)
+	self.frame.Cooldown:SetHideCountdownNumbers(showFractions)
+	self.frame.Cooldown.DurationText:SetShown(showFractions and #self.activeInstances > 0)
+	self.frame:SetScript("OnUpdate", showFractions and GenerateClosure(self.OnUpdate, self) or nil)
+end
+
+function AtonementEchoTracker:OnUpdate(_, elapsed)
+	self.elapsed = (self.elapsed or 0) + elapsed
+
+	if self.elapsed < 0.1 then
+		return
+	end
+
+	self.elapsed = self.elapsed - 0.1
+
+	if self.activeDuration == nil then
+		return
+	end
+
+	self.frame.Cooldown.DurationText:SetFormattedText("%.1f", self.activeDuration:GetRemainingDuration())
+end
+
+function AtonementEchoTracker:ApplyMask()
+	local hide = AtonementEchoTrackerSaved.Settings.HideMask
+
+	if hide then
+		self.frame.Icon:RemoveMaskTexture(self.frame.Mask)
+	else
+		self.frame.Icon:AddMaskTexture(self.frame.Mask)
+	end
+
+	self.frame.Overlay:SetShown(not hide)
+end
+
+function AtonementEchoTracker:ApplyStackCountAnchor()
+	local anchor = AtonementEchoTrackerSaved.Settings.StackCountAnchor
+	local justifyH
+
+	if anchor == "TOPLEFT" or anchor == "LEFT" or anchor == "BOTTOMLEFT" then
+		justifyH = "LEFT"
+	elseif anchor == "TOPRIGHT" or anchor == "RIGHT" or anchor == "BOTTOMRIGHT" then
+		justifyH = "RIGHT"
+	else
+		justifyH = "CENTER"
+	end
+
+	self.frame.Cooldown.StackCount:ClearAllPoints()
+	self.frame.Cooldown.StackCount:SetPoint(anchor)
+	self.frame.Cooldown.StackCount:SetJustifyH(justifyH)
 end
 
 function AtonementEchoTracker:ApplyBorderStyle()
@@ -169,28 +277,42 @@ function AtonementEchoTracker:ApplySettings()
 	self:ApplyIconZoom()
 	self:ApplyStackFont()
 	self:ApplyStackColor()
+	self:ApplyDurationFont()
+	self:ApplyDurationColor()
 	self:ApplyBorderStyle()
+	self:ApplyMask()
+	self:ApplyStackCountAnchor()
+	self:SetShowFractions(AtonementEchoTrackerSaved.Settings.ShowFractions)
 end
 
 function AtonementEchoTracker:OnSettingsChanged(key, value)
-	if key == Private.Settings.Keys.Width or key == Private.Settings.Keys.Height then
+	local Keys = Private.Settings.Keys
+
+	if key == Keys.Width or key == Keys.Height then
 		self:ApplySize()
-	elseif key == Private.Settings.Keys.Opacity then
+	elseif key == Keys.Opacity then
 		self:ApplyOpacity()
-	elseif key == Private.Settings.Keys.IconZoom then
+	elseif key == Keys.IconZoom then
 		self:ApplyIconZoom()
-	elseif
-		key == Private.Settings.Keys.Font
-		or key == Private.Settings.Keys.StackFontSize
-		or key == Private.Settings.Keys.FontFlags
-	then
+	elseif key == Keys.Font or key == Keys.StackFontSize or key == Keys.FontFlags then
 		self:ApplyStackFont()
-	elseif key == Private.Settings.Keys.StackColor then
+		self:ApplyDurationFont()
+	elseif key == Keys.DurationFontSize then
+		self:ApplyDurationFont()
+	elseif key == Keys.StackColor then
 		self:ApplyStackColor()
-	elseif key == Private.Settings.Keys.BorderStyle then
+	elseif key == Keys.DurationColor then
+		self:ApplyDurationColor()
+	elseif key == Keys.BorderStyle then
 		self:ApplyBorderStyle()
-	elseif key == Private.Settings.Keys.DefaultState then
+	elseif key == Keys.ShowFractions then
+		self:SetShowFractions(value)
+	elseif key == Keys.DefaultState then
 		self:UpdateDisplay()
+	elseif key == Keys.HideMask then
+		self:ApplyMask()
+	elseif key == Keys.StackCountAnchor then
+		self:ApplyStackCountAnchor()
 	end
 end
 
@@ -198,11 +320,16 @@ function AtonementEchoTracker:UpdateDisplay()
 	local activeCount = #self.activeInstances
 
 	if activeCount == 0 then
-		self.frame.Cooldown.StackCount:SetText(0)
+		self.activeDuration = nil
+		self.frame.Cooldown.StackCount:SetText("0")
+		self.frame.Cooldown.DurationText:SetShown(false)
 		self.frame.Cooldown:Clear()
 
 		if AtonementEchoTrackerSaved.Settings.DefaultState == Private.Enum.DefaultState.Hidden then
-			self.frame:Hide()
+			local LibEditMode = LibStub("LibEditMode")
+			if not LibEditMode:IsInEditMode() then
+				self.frame:Hide()
+			end
 		else
 			self.frame.Icon:SetDesaturated(true)
 			self.frame:Show()
@@ -218,8 +345,10 @@ function AtonementEchoTracker:UpdateDisplay()
 
 		local duration = C_DurationUtil.CreateDuration()
 		duration:SetTimeFromEnd(nextExpiry, GetTime())
+		self.activeDuration = duration
 		self.frame.Cooldown:SetCooldownFromDurationObject(duration)
-		self.frame.Cooldown.StackCount:SetText(activeCount)
+		self.frame.Cooldown.StackCount:SetText(tostring(activeCount))
+		self.frame.Cooldown.DurationText:SetShown(AtonementEchoTrackerSaved.Settings.ShowFractions)
 		self.frame.Icon:SetDesaturated(false)
 		self.frame:Show()
 	end

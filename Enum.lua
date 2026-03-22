@@ -31,3 +31,16 @@ Private.Enum.DefaultState = {
 	Desaturated = "Desaturated",
 	Hidden = "Hidden",
 }
+
+---@enum StackCountAnchor
+Private.Enum.StackCountAnchor = {
+	TopLeft = "TOPLEFT",
+	Top = "TOP",
+	TopRight = "TOPRIGHT",
+	Left = "LEFT",
+	Center = "CENTER",
+	Right = "RIGHT",
+	BottomLeft = "BOTTOMLEFT",
+	Bottom = "BOTTOM",
+	BottomRight = "BOTTOMRIGHT",
+}

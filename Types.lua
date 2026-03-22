@@ -14,6 +14,17 @@
 ---@field ContentType table<string, number>
 ---@field FontFlags table<string, string>
 ---@field DefaultState table<string, string>
+---@field StackCountAnchor table<string, string>
+
+---@class AtonementEchoTrackerCooldown : Cooldown
+---@field DurationText FontString
+---@field StackCount FontString
+
+---@class AtonementEchoTrackerFrame : Frame
+---@field Icon Texture
+---@field Mask MaskTexture
+---@field Overlay Texture
+---@field Cooldown AtonementEchoTrackerCooldown
 
 ---@class AtonementEchoTrackerSettings
 ---@field Keys table<string, string>
@@ -22,6 +33,7 @@
 ---@field GetSliderSettingsForKey fun(key: string): SliderSettings
 ---@field GetBorderOptions fun(): string[]
 ---@field GetDefaultStates fun(): string[]
+---@field GetStackCountAnchors fun(): string[]
 
 ---@class AtonementEchoTrackerSaved
 ---@field Settings AtonementEchoTrackerSavedSettings
@@ -40,6 +52,9 @@
 ---@field Font string
 ---@field FontFlags table<string, boolean>
 ---@field BorderStyle string
+---@field ShowFractions boolean
+---@field HideMask boolean
+---@field StackCountAnchor string
 ---@field Position FramePosition
 
 ---@class FramePosition

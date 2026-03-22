@@ -150,6 +150,42 @@ function Private.SetupEditMode(editModeParentFrame)
 			}
 		end
 
+		if key == Private.Settings.Keys.FontFlags then
+			local function Generator(_, rootDescription)
+				for _, flag in ipairs({ Private.Enum.FontFlags.OUTLINE, Private.Enum.FontFlags.SHADOW }) do
+					local function IsEnabled()
+						return AtonementEchoTrackerSaved.Settings.FontFlags[flag] == true
+					end
+
+					local function SetProxy()
+						AtonementEchoTrackerSaved.Settings.FontFlags[flag] = not AtonementEchoTrackerSaved.Settings.FontFlags[flag]
+						Private.EventRegistry:TriggerEvent(
+							Private.Enum.Events.SETTING_CHANGED,
+							key,
+							AtonementEchoTrackerSaved.Settings.FontFlags
+						)
+					end
+
+					rootDescription:CreateCheckbox(flag, IsEnabled, SetProxy)
+				end
+			end
+
+			local function Set(_, value)
+				AtonementEchoTrackerSaved.Settings.FontFlags = value
+				Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, value)
+			end
+
+			---@type LibEditModeDropdown
+			return {
+				name = "Font Flags",
+				kind = Enum.EditModeSettingDisplayType.Dropdown,
+				default = defaults.FontFlags,
+				generator = Generator,
+				set = Set,
+				multiple = true,
+			}
+		end
+
 		if key == Private.Settings.Keys.DurationColor then
 			local function Get(_)
 				return CreateColorFromHexString(AtonementEchoTrackerSaved.Settings.DurationColor)
@@ -168,6 +204,7 @@ function Private.SetupEditMode(editModeParentFrame)
 			---@type LibEditModeColorPicker
 			return {
 				name = "Duration Color",
+				desc = "Only applies when Show Duration Fractions is enabled.",
 				kind = LibEditMode.SettingType.ColorPicker,
 				default = CreateColorFromHexString(defaults.DurationColor),
 				get = Get,
@@ -343,6 +380,63 @@ function Private.SetupEditMode(editModeParentFrame)
 				name = "Border Style",
 				kind = Enum.EditModeSettingDisplayType.Dropdown,
 				default = defaults.BorderStyle,
+				generator = Generator,
+				set = Set,
+			}
+		end
+
+		if key == Private.Settings.Keys.HideMask then
+			local function Get(_)
+				return AtonementEchoTrackerSaved.Settings.HideMask
+			end
+
+			local function Set(_, value)
+				if AtonementEchoTrackerSaved.Settings.HideMask ~= value then
+					AtonementEchoTrackerSaved.Settings.HideMask = value
+					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, value)
+				end
+			end
+
+			---@type LibEditModeCheckbox
+			return {
+				name = "Hide Mask",
+				kind = Enum.EditModeSettingDisplayType.Checkbox,
+				default = defaults.HideMask,
+				get = Get,
+				set = Set,
+			}
+		end
+
+		if key == Private.Settings.Keys.StackCountAnchor then
+			local function Generator(_, rootDescription)
+				for _, anchor in ipairs(Private.Settings.GetStackCountAnchors()) do
+					local function IsEnabled()
+						return AtonementEchoTrackerSaved.Settings.StackCountAnchor == anchor
+					end
+
+					local function SetProxy()
+						if AtonementEchoTrackerSaved.Settings.StackCountAnchor ~= anchor then
+							AtonementEchoTrackerSaved.Settings.StackCountAnchor = anchor
+							Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, anchor)
+						end
+					end
+
+					rootDescription:CreateRadio(anchor, IsEnabled, SetProxy)
+				end
+			end
+
+			local function Set(_, value)
+				if AtonementEchoTrackerSaved.Settings.StackCountAnchor ~= value then
+					AtonementEchoTrackerSaved.Settings.StackCountAnchor = value
+					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, value)
+				end
+			end
+
+			---@type LibEditModeDropdown
+			return {
+				name = "Stack Count Anchor",
+				kind = Enum.EditModeSettingDisplayType.Dropdown,
+				default = defaults.StackCountAnchor,
 				generator = Generator,
 				set = Set,
 			}

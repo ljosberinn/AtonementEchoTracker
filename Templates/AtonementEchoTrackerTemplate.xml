@@ -7,14 +7,13 @@
   <Frame
     name="AtonementEchoTrackerTemplate"
     virtual="true"
-    ignoreParentAlpha="true"
     enableMouse="false"
     propagateMouseInput="Both"
   >
     <Layers>
       <Layer level="ARTWORK">
         <Texture parentKey="Icon" setAllPoints="true" />
-        <MaskTexture atlas="UI-HUD-CoolDownManager-Mask" setAllPoints="true">
+        <MaskTexture parentKey="Mask" atlas="UI-HUD-CoolDownManager-Mask" setAllPoints="true">
           <MaskedTextures>
             <MaskedTexture childKey="Icon" />
           </MaskedTextures>
@@ -41,6 +40,13 @@
         <Layers>
           <Layer level="OVERLAY">
             <FontString
+              parentKey="DurationText"
+              font="GameFontHighlightHugeOutline"
+              justifyH="CENTER"
+              hidden="true"
+              setAllPoints="true"
+            />
+            <FontString
               parentKey="StackCount"
               font="GameFontHighlightHugeOutline"
               justifyH="RIGHT"
@@ -53,10 +59,5 @@
         </Layers>
       </Cooldown>
     </Frames>
-    <!-- <Scripts>
-      <OnLoad method="OnLoad" />
-      <OnSizeChanged method="OnSizeChanged" />
-      <OnUpdate method="OnUpdate" />
-    </Scripts> -->
   </Frame>
 </Ui>
