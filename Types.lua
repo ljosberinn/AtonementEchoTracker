@@ -8,7 +8,7 @@
 ---@field SetupEditMode fun(editModeParentFrame: Frame)
 
 ---@class Driver
----@field private auraIds table<number, boolean>
+---@field private auraId number
 ---@field private specId number
 ---@field private activeInstances table<number, ActiveAuraInstance>
 

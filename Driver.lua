@@ -1,18 +1,21 @@
 ---@type string, AtonementEchoTracker
 local addonName, Private = ...
 
+local LibEditMode = LibStub("LibEditMode")
+local LibSharedMedia = LibStub("LibSharedMedia-3.0")
+
 ---@class Driver
 local AtonementEchoTracker = {}
 
 local enabledAuras = {
-	[1468] = { [364343] = true }, -- preservation: echo
-	[256] = { [194384] = true }, -- discipline: atonement
-	[105] = { [774] = true, [155777] = true }, -- restoration: rejuvenation & reju (germination)
+	[1468] = 364343, -- preservation: echo
+	[256] = 194384, -- discipline: atonement
+	[105] = 774, -- restoration: rejuvenation
 }
 
 function AtonementEchoTracker:Init()
 	self.specId = PlayerUtil.GetCurrentSpecID()
-	self.auraIds = enabledAuras[self.specId]
+	self.auraId = enabledAuras[self.specId]
 	self.activeInstances = {}
 
 	Private.EventRegistry:RegisterCallback(Private.Enum.Events.SETTING_CHANGED, self.OnSettingsChanged, self)
@@ -60,11 +63,14 @@ function AtonementEchoTracker:Init()
 
 	Private.SetupEditMode(self.frame)
 
-	local LibEditMode = LibStub("LibEditMode")
-
 	LibEditMode:RegisterCallback("enter", function()
-		self.frame:Show()
+		if self.auraId then
+			self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(self.auraId))
+		end
+
+		self:UpdateDisplay()
 	end)
+
 	LibEditMode:RegisterCallback("exit", function()
 		if not self:LoadConditionsProhibitExecution() then
 			self:UpdateDisplay()
@@ -133,13 +139,9 @@ function AtonementEchoTracker:OnListenerEvent(_self, event, ...)
 end
 
 function AtonementEchoTracker:Enable()
+	table.wipe(self.activeInstances)
 	self:UpdateDisplay()
-	for auraId, enabled in pairs(self.auraIds) do
-		if enabled then
-			self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(auraId))
-			break
-		end
-	end
+	self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(self.auraId))
 
 	self:RegisterRaidEvents()
 
@@ -185,6 +187,8 @@ function AtonementEchoTracker:RegisterRaidEvents()
 end
 
 function AtonementEchoTracker:Disable()
+	table.wipe(self.activeInstances)
+
 	for _, frame in ipairs(self.listenerFrames.party) do
 		frame:UnregisterAllEvents()
 	end
@@ -192,8 +196,6 @@ function AtonementEchoTracker:Disable()
 	for _, frame in ipairs(self.listenerFrames.raid) do
 		frame:UnregisterAllEvents()
 	end
-
-	local LibEditMode = LibStub("LibEditMode")
 
 	if not LibEditMode:IsInEditMode() then
 		self.frame:Hide()
@@ -331,7 +333,6 @@ function AtonementEchoTracker:ApplyStackCountAnchor()
 end
 
 function AtonementEchoTracker:ApplyBorderStyle()
-	local LibSharedMedia = LibStub("LibSharedMedia-3.0")
 	local path = LibSharedMedia:Fetch(LibSharedMedia.MediaType.BORDER, AtonementEchoTrackerSaved.Settings.BorderStyle)
 	if path then
 		self.frame.Border:SetBackdrop({ edgeFile = path, edgeSize = 8 })
@@ -401,11 +402,10 @@ function AtonementEchoTracker:UpdateDisplay()
 		self.frame.Cooldown.DurationText:SetShown(false)
 		self.frame.Cooldown:Clear()
 
-		if AtonementEchoTrackerSaved.Settings.DefaultState == Private.Enum.DefaultState.Hidden then
-			local LibEditMode = LibStub("LibEditMode")
-			if not LibEditMode:IsInEditMode() then
-				self.frame:Hide()
-			end
+		if LibEditMode:IsInEditMode() then
+			self.frame:Show()
+		elseif AtonementEchoTrackerSaved.Settings.DefaultState == Private.Enum.DefaultState.Hidden then
+			self.frame:Hide()
 		else
 			self.frame.Icon:SetDesaturated(true)
 			self.frame:Show()
@@ -441,6 +441,14 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 		end
 
 		if updateInfo.isFullUpdate or updateInfo.addedAuras ~= nil then
+			if updateInfo.isFullUpdate then
+				for i = #self.activeInstances, 1, -1 do
+					if self.activeInstances[i].unit == unit then
+						table.remove(self.activeInstances, i)
+					end
+				end
+			end
+
 			---@type AuraData[]
 			local auras = updateInfo.addedAuras == nil and C_UnitAuras.GetUnitAuras(unit, "PLAYER|HELPFUL", nil)
 				or updateInfo.addedAuras
@@ -449,7 +457,7 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 				if
 					not issecretvalue(aura.sourceUnit)
 					and aura.sourceUnit == "player"
-					and self.auraIds[aura.spellId]
+					and self.auraId == aura.spellId
 				then
 					table.insert(self.activeInstances, {
 						auraInstanceId = aura.auraInstanceID,
@@ -533,7 +541,7 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 
 		local specId = PlayerUtil.GetCurrentSpecID()
 		self.specId = specId
-		self.auraIds = enabledAuras[self.specId]
+		self.auraId = enabledAuras[self.specId]
 
 		if not self:LoadConditionsProhibitExecution() then
 			self:Enable()
