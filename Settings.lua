@@ -29,7 +29,7 @@ Private.Settings.Keys = {
 function Private.Settings.GetDefaultSettings()
 	return {
 		LoadConditionContentType = {
-			[Private.Enum.ContentType.OpenWorld] = false,
+			[Private.Enum.ContentType.OpenWorld] = true,
 			[Private.Enum.ContentType.Delve] = false,
 			[Private.Enum.ContentType.Dungeon] = true,
 			[Private.Enum.ContentType.Raid] = true,

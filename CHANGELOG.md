@@ -1,3 +1,7 @@
+## Version 1.0.2
+
+- enable by default in open world
+
 ## Version 1.0.1
 
 - remove Germination from tracking as it confuses things in many ways
