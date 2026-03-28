@@ -148,6 +148,10 @@ function AtonementEchoTracker:Enable()
 	if not IsInRaid() then
 		self:RegisterPartyEvents()
 	end
+
+	if AtonementEchoTrackerSaved.Settings.CombatOnly then
+		self:RegisterCombatEvents()
+	end
 end
 
 function AtonementEchoTracker:RegisterPartyEvents()
@@ -197,9 +201,21 @@ function AtonementEchoTracker:Disable()
 		frame:UnregisterAllEvents()
 	end
 
+	self:UnregisterCombatEvents()
+
 	if not LibEditMode:IsInEditMode() then
 		self.frame:Hide()
 	end
+end
+
+function AtonementEchoTracker:RegisterCombatEvents()
+	self.frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+	self.frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+end
+
+function AtonementEchoTracker:UnregisterCombatEvents()
+	self.frame:UnregisterEvent("PLAYER_REGEN_DISABLED")
+	self.frame:UnregisterEvent("PLAYER_REGEN_ENABLED")
 end
 
 function AtonementEchoTracker:ApplyPosition()
@@ -279,7 +295,9 @@ end
 
 function AtonementEchoTracker:SetShowFractions(showFractions)
 	self.frame.Cooldown:SetHideCountdownNumbers(showFractions)
-	self.frame.Cooldown.DurationText:SetShown(showFractions and #self.activeInstances > 0)
+	self.frame.Cooldown.DurationText:SetShown(
+		showFractions and AtonementEchoTrackerSaved.Settings.ShowDuration and #self.activeInstances > 0
+	)
 	self.frame:SetScript("OnUpdate", showFractions and GenerateClosure(self.OnUpdate, self) or nil)
 end
 
@@ -384,6 +402,19 @@ function AtonementEchoTracker:OnSettingsChanged(key, value)
 		self:ApplyMask()
 	elseif key == Keys.StackCountAnchor or key == Keys.StackCountOffsetX or key == Keys.StackCountOffsetY then
 		self:ApplyStackCountAnchor()
+	elseif key == Keys.ShowDuration then
+		self:SetShowFractions(AtonementEchoTrackerSaved.Settings.ShowFractions)
+	elseif key == Keys.CombatOnly then
+		if value then
+			self:RegisterCombatEvents()
+
+			if not UnitAffectingCombat("player") and not LibEditMode:IsInEditMode() then
+				self.frame:Hide()
+			end
+		else
+			self:UnregisterCombatEvents()
+			self:UpdateDisplay()
+		end
 	elseif key == Keys.LoadConditionContentType then
 		if not self:LoadConditionsProhibitExecution() then
 			self:Enable()
@@ -424,7 +455,9 @@ function AtonementEchoTracker:UpdateDisplay()
 		self.activeDuration = duration
 		self.frame.Cooldown:SetCooldownFromDurationObject(duration, true)
 		self.frame.Cooldown.StackCount:SetText(tostring(activeCount))
-		self.frame.Cooldown.DurationText:SetShown(AtonementEchoTrackerSaved.Settings.ShowFractions)
+		self.frame.Cooldown.DurationText:SetShown(
+			AtonementEchoTrackerSaved.Settings.ShowFractions and AtonementEchoTrackerSaved.Settings.ShowDuration
+		)
 		self.frame.Icon:SetDesaturated(false)
 		self.frame:Show()
 	end
@@ -551,6 +584,12 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 			self:Enable()
 		else
 			self:Disable()
+		end
+	elseif event == "PLAYER_REGEN_DISABLED" then
+		self:UpdateDisplay()
+	elseif event == "PLAYER_REGEN_ENABLED" then
+		if not LibEditMode:IsInEditMode() then
+			self.frame:Hide()
 		end
 	elseif event == Private.Enum.Events.EDIT_MODE_POSITION_CHANGED then
 		local _, _, point, x, y = ...

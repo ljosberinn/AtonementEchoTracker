@@ -49,6 +49,9 @@
 ---@class AtonementEchoTrackerSaved
 ---@field Settings AtonementEchoTrackerSavedSettings
 
+---@type AtonementEchoTrackerSaved
+AtonementEchoTrackerSaved = AtonementEchoTrackerSaved
+
 ---@class AtonementEchoTrackerSavedSettings
 ---@field LoadConditionContentType table<number, boolean>
 ---@field Width number
@@ -64,6 +67,8 @@
 ---@field FontFlags table<string, boolean>
 ---@field BorderStyle string
 ---@field ShowFractions boolean
+---@field ShowDuration boolean
+---@field CombatOnly boolean
 ---@field HideMask boolean
 ---@field StackCountAnchor string
 ---@field StackCountOffsetX number

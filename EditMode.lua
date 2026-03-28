@@ -209,7 +209,8 @@ function Private.SetupEditMode(editModeParentFrame)
 					end
 
 					local function SetProxy()
-						AtonementEchoTrackerSaved.Settings.FontFlags[flag] = not AtonementEchoTrackerSaved.Settings.FontFlags[flag]
+						AtonementEchoTrackerSaved.Settings.FontFlags[flag] =
+							not AtonementEchoTrackerSaved.Settings.FontFlags[flag]
 						Private.EventRegistry:TriggerEvent(
 							Private.Enum.Events.SETTING_CHANGED,
 							key,
@@ -307,6 +308,50 @@ function Private.SetupEditMode(editModeParentFrame)
 				name = "Show Duration Fractions",
 				kind = Enum.EditModeSettingDisplayType.Checkbox,
 				default = defaults.ShowFractions,
+				get = Get,
+				set = Set,
+			}
+		end
+
+		if key == Private.Settings.Keys.ShowDuration then
+			local function Get(_)
+				return AtonementEchoTrackerSaved.Settings.ShowDuration
+			end
+
+			local function Set(_, value)
+				if AtonementEchoTrackerSaved.Settings.ShowDuration ~= value then
+					AtonementEchoTrackerSaved.Settings.ShowDuration = value
+					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, value)
+				end
+			end
+
+			---@type LibEditModeCheckbox
+			return {
+				name = "Show Duration",
+				kind = Enum.EditModeSettingDisplayType.Checkbox,
+				default = defaults.ShowDuration,
+				get = Get,
+				set = Set,
+			}
+		end
+
+		if key == Private.Settings.Keys.CombatOnly then
+			local function Get(_)
+				return AtonementEchoTrackerSaved.Settings.CombatOnly
+			end
+
+			local function Set(_, value)
+				if AtonementEchoTrackerSaved.Settings.CombatOnly ~= value then
+					AtonementEchoTrackerSaved.Settings.CombatOnly = value
+					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, value)
+				end
+			end
+
+			---@type LibEditModeCheckbox
+			return {
+				name = "Only Show In Combat",
+				kind = Enum.EditModeSettingDisplayType.Checkbox,
+				default = defaults.CombatOnly,
 				get = Get,
 				set = Set,
 			}

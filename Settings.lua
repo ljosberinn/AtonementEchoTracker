@@ -6,6 +6,7 @@ Private.Settings = {}
 
 Private.Settings.Keys = {
 	LoadConditionContentType = "LOAD_CONDITION_CONTENT_TYPE",
+	CombatOnly = "COMBAT_ONLY",
 	Width = "FRAME_WIDTH",
 	Height = "FRAME_HEIGHT",
 	DurationFontSize = "DURATION_FONT_SIZE",
@@ -19,6 +20,7 @@ Private.Settings.Keys = {
 	FontFlags = "FONT_FLAGS",
 	BorderStyle = "BORDER_STYLE",
 	ShowFractions = "SHOW_FRACTIONS",
+	ShowDuration = "SHOW_DURATION",
 	HideMask = "HIDE_MASK",
 	StackCountAnchor = "STACK_COUNT_ANCHOR",
 	StackCountOffsetX = "STACK_COUNT_OFFSET_X",
@@ -52,6 +54,8 @@ function Private.Settings.GetDefaultSettings()
 		},
 		BorderStyle = "None",
 		ShowFractions = false,
+		ShowDuration = true,
+		CombatOnly = false,
 		HideMask = false,
 		StackCountAnchor = Private.Enum.StackCountAnchor.BottomRight,
 		StackCountOffsetX = 0,
@@ -128,6 +132,7 @@ end
 function Private.Settings.GetDisplayOrder()
 	return {
 		Private.Settings.Keys.LoadConditionContentType,
+		Private.Settings.Keys.CombatOnly,
 		Private.Settings.Keys.Width,
 		Private.Settings.Keys.Height,
 		Private.Settings.Keys.Opacity,
@@ -142,6 +147,7 @@ function Private.Settings.GetDisplayOrder()
 		Private.Settings.Keys.DefaultState,
 		Private.Settings.Keys.HideMask,
 		Private.Settings.Keys.ShowFractions,
+		Private.Settings.Keys.ShowDuration,
 		Private.Settings.Keys.DurationColor,
 		Private.Settings.Keys.StackColor,
 		Private.Settings.Keys.BorderStyle,
