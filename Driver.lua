@@ -489,6 +489,10 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 						local auraData = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceId)
 
 						if auraData ~= nil then
+							if issecretvalue(auraData.expirationTime) then
+								break
+							end
+
 							self.activeInstances[activeInstanceIndex].expirationTime = auraData.expirationTime
 							self:UpdateDisplay()
 						end
