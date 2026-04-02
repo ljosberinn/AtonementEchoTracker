@@ -294,7 +294,7 @@ function AtonementEchoTracker:ApplyDurationColor()
 end
 
 function AtonementEchoTracker:SetShowFractions(showFractions)
-	self.frame.Cooldown:SetHideCountdownNumbers(showFractions)
+	self.frame.Cooldown:SetHideCountdownNumbers(showFractions or not AtonementEchoTrackerSaved.Settings.ShowDuration)
 	self.frame.Cooldown.DurationText:SetShown(
 		showFractions and AtonementEchoTrackerSaved.Settings.ShowDuration and #self.activeInstances > 0
 	)
@@ -439,7 +439,7 @@ function AtonementEchoTracker:UpdateDisplay()
 			self.frame:Hide()
 		else
 			self.frame.Icon:SetDesaturated(true)
-			self.frame:Show()
+			self.frame:SetShown(not AtonementEchoTrackerSaved.Settings.CombatOnly)
 		end
 	else
 		local nextExpiringInstance = nil

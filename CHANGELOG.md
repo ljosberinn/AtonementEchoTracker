@@ -1,3 +1,8 @@
+## Version 1.0.4
+
+- fix Combat Only option
+- fix hiding the default cooldown duration when hiding duration
+
 ## Version 1.0.3
 
 - account for a seemingly extremely rare case in which aura.expirationTime is secret when it shouldn't be
