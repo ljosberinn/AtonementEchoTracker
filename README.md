@@ -5,7 +5,7 @@
 - [Curseforge](https://www.curseforge.com/wow/addons/atonementechotracker)
 - [Wago](https://addons.wago.io/addons/atonementechotracker)
 
-... that also tracks Rejuvation on Restoration Druid but it's too late to rename.
+... that also tracks Rejuvation on Restoration Druid and Rejuvenating Mist on Mistweaver Monk but it's too late to rename.
 
 ## What It Does
 

@@ -8,14 +8,15 @@ local LibSharedMedia = LibStub("LibSharedMedia-3.0")
 local AtonementEchoTracker = {}
 
 local enabledAuras = {
-	[1468] = 364343, -- preservation: echo
-	[256] = 194384, -- discipline: atonement
-	[105] = 774, -- restoration: rejuvenation
+	[1468] = { [364343] = true }, -- preservation: echo
+	[256] = { [194384] = true }, -- discipline: atonement
+	[105] = { [774] = true, [155777] = true }, -- restoration: rejuvenation (primary icon), germination
+	[270] = { [119611] = true }, -- misteweaver: renewing mist
 }
 
 function AtonementEchoTracker:Init()
 	self.specId = PlayerUtil.GetCurrentSpecID()
-	self.auraId = enabledAuras[self.specId]
+	self.auraIds = enabledAuras[self.specId]
 	self.activeInstances = {}
 
 	Private.EventRegistry:RegisterCallback(Private.Enum.Events.SETTING_CHANGED, self.OnSettingsChanged, self)
@@ -64,8 +65,9 @@ function AtonementEchoTracker:Init()
 	Private.SetupEditMode(self.frame)
 
 	LibEditMode:RegisterCallback("enter", function()
-		if self.auraId then
-			self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(self.auraId))
+		if self.auraIds then
+			local firstAuraId = next(self.auraIds)
+			self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(firstAuraId))
 		end
 
 		self:UpdateDisplay()
@@ -86,10 +88,6 @@ function AtonementEchoTracker:Init()
 	end
 
 	self.frame:SetScript("OnEvent", GenerateClosure(self.OnFrameEvent, self))
-end
-
-function AtonementEchoTracker:IsRelevantSpec()
-	return enabledAuras[self.specId] ~= nil
 end
 
 function AtonementEchoTracker:UpdateContentType()
@@ -123,7 +121,7 @@ function AtonementEchoTracker:UpdateContentType()
 end
 
 function AtonementEchoTracker:LoadConditionsProhibitExecution()
-	if not self:IsRelevantSpec() then
+	if self.auraIds == nil then
 		return true
 	end
 
@@ -141,7 +139,7 @@ end
 function AtonementEchoTracker:Enable()
 	table.wipe(self.activeInstances)
 	self:UpdateDisplay()
-	self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(self.auraId))
+	self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(next(self.auraIds)))
 
 	self:RegisterRaidEvents()
 
@@ -473,61 +471,92 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 			return
 		end
 
-		if updateInfo.isFullUpdate or updateInfo.addedAuras ~= nil then
-			if updateInfo.isFullUpdate then
-				for i = #self.activeInstances, 1, -1 do
-					if self.activeInstances[i].unit == unit then
-						table.remove(self.activeInstances, i)
-					end
+		if updateInfo.isFullUpdate then
+			for i = #self.activeInstances, 1, -1 do
+				if self.activeInstances[i].unit == unit then
+					table.remove(self.activeInstances, i)
 				end
 			end
 
-			---@type AuraData[]
-			local auras = updateInfo.addedAuras == nil and C_UnitAuras.GetUnitAuras(unit, "PLAYER|HELPFUL", nil)
-				or updateInfo.addedAuras
+			local auraIndex = 1
+			local results = {}
 
-			for _, aura in ipairs(auras) do
+			while true do
+				local aura = C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, "HELPFUL|PLAYER")
+
+				if aura == nil then
+					break
+				end
+
 				if
-					not issecretvalue(aura.sourceUnit)
-					and aura.sourceUnit == "player"
-					and self.auraId == aura.spellId
+					not issecretvalue(aura.spellId)
+					and self.auraIds[aura.spellId] == true
+					and not issecretvalue(aura.expirationTime)
+					and not issecretvalue(aura.duration)
+				then
+					table.insert(results, {
+						auraInstanceId = aura.auraInstanceID,
+						expirationTime = aura.expirationTime,
+						duration = aura.duration,
+						spellId = aura.spellId,
+					})
+				end
+
+				auraIndex = auraIndex + 1
+			end
+
+			for _, entry in ipairs(results) do
+				table.insert(self.activeInstances, {
+					auraInstanceId = entry.auraInstanceId,
+					expirationTime = entry.expirationTime,
+					duration = entry.duration,
+					spellId = entry.spellId,
+					unit = unit,
+				})
+			end
+
+			if #results > 0 then
+				self:UpdateDisplay()
+			end
+		end
+
+		if updateInfo.addedAuras then
+			for _, aura in ipairs(updateInfo.addedAuras) do
+				if
+					not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, aura.auraInstanceID, "HELPFUL|PLAYER")
+					and not issecretvalue(aura.spellId)
+					and enabledAuras[self.specId][aura.spellId] == true
+					and not issecretvalue(aura.expirationTime)
+					and not issecretvalue(aura.duration)
 				then
 					table.insert(self.activeInstances, {
 						auraInstanceId = aura.auraInstanceID,
 						expirationTime = aura.expirationTime,
 						duration = aura.duration,
+						spellId = aura.spellId,
 						unit = unit,
 					})
-					self:UpdateDisplay()
 
-					break
+					self:UpdateDisplay()
 				end
 			end
 		end
 
 		if updateInfo.updatedAuraInstanceIDs then
-			local activeInstanceIndex = nil
-
-			for i, auraInfo in ipairs(self.activeInstances) do
-				if auraInfo.unit == unit then
-					activeInstanceIndex = i
-
-					break
-				end
-			end
-
-			if activeInstanceIndex ~= nil then
-				for _, auraInstanceId in ipairs(updateInfo.updatedAuraInstanceIDs) do
-					if auraInstanceId == self.activeInstances[activeInstanceIndex].auraInstanceId then
+			for _, auraInstanceId in ipairs(updateInfo.updatedAuraInstanceIDs) do
+				for i, instance in ipairs(self.activeInstances) do
+					if instance.unit == unit and instance.auraInstanceId == auraInstanceId then
 						local auraData = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceId)
 
 						if auraData ~= nil then
-							if issecretvalue(auraData.expirationTime) then
-								break
+							if not issecretvalue(auraData.expirationTime) then
+								self.activeInstances[i].expirationTime = auraData.expirationTime
+								self:UpdateDisplay()
 							end
-
-							self.activeInstances[activeInstanceIndex].expirationTime = auraData.expirationTime
-							self:UpdateDisplay()
+							-- duration rarely changes on refresh but guard it anyway
+							if not issecretvalue(auraData.duration) then
+								self.activeInstances[i].duration = auraData.duration
+							end
 						end
 
 						break
@@ -537,22 +566,14 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 		end
 
 		if updateInfo.removedAuraInstanceIDs then
-			local activeInstanceIndex = nil
-
-			for i, auraInfo in ipairs(self.activeInstances) do
-				if auraInfo.unit == unit then
-					activeInstanceIndex = i
-					break
-				end
-			end
-
-			if activeInstanceIndex ~= nil then
-				for _, auraInstanceId in ipairs(updateInfo.removedAuraInstanceIDs) do
-					if auraInstanceId == self.activeInstances[activeInstanceIndex].auraInstanceId then
-						table.remove(self.activeInstances, activeInstanceIndex)
+			for _, auraInstanceId in ipairs(updateInfo.removedAuraInstanceIDs) do
+				for i = #self.activeInstances, 1, -1 do
+					if
+						self.activeInstances[i].unit == unit
+						and self.activeInstances[i].auraInstanceId == auraInstanceId
+					then
+						table.remove(self.activeInstances, i)
 						self:UpdateDisplay()
-
-						break
 					end
 				end
 			end
@@ -578,7 +599,7 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 
 		local specId = PlayerUtil.GetCurrentSpecID()
 		self.specId = specId
-		self.auraId = enabledAuras[self.specId]
+		self.auraIds = enabledAuras[self.specId]
 
 		if not self:LoadConditionsProhibitExecution() then
 			self:Enable()
