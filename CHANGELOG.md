@@ -1,3 +1,8 @@
+## Version 1.1
+
+- added support for Germination on Restoration Druid (thanks to 0bi\_\_)
+- added support for Rejuvenating Mist on Mistweaver Monk
+
 ## Version 1.0.4
 
 - fix Combat Only option
