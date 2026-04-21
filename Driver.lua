@@ -121,10 +121,6 @@ function AtonementEchoTracker:UpdateContentType()
 end
 
 function AtonementEchoTracker:LoadConditionsProhibitExecution()
-	if self.auraIds == nil then
-		return true
-	end
-
 	if not AtonementEchoTrackerSaved.Settings.LoadConditionContentType[self.contentType] then
 		return true
 	end
@@ -137,6 +133,10 @@ function AtonementEchoTracker:OnListenerEvent(_self, event, ...)
 end
 
 function AtonementEchoTracker:Enable()
+	if self.auraIds == nil then
+		return
+	end
+
 	table.wipe(self.activeInstances)
 	self:UpdateDisplay()
 	self.frame.Icon:SetTexture(C_Spell.GetSpellTexture(next(self.auraIds)))
@@ -463,6 +463,10 @@ end
 
 function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 	if event == "UNIT_AURA" then
+		if self.auraIds == nil then
+			return
+		end
+
 		---@type string, UnitAuraUpdateInfo
 		local unit, updateInfo = ...
 
@@ -525,7 +529,7 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 				if
 					not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, aura.auraInstanceID, "HELPFUL|PLAYER")
 					and not issecretvalue(aura.spellId)
-					and enabledAuras[self.specId][aura.spellId] == true
+					and self.auraIds[aura.spellId] == true
 					and not issecretvalue(aura.expirationTime)
 					and not issecretvalue(aura.duration)
 				then
@@ -601,10 +605,10 @@ function AtonementEchoTracker:OnFrameEvent(_, event, ...)
 		self.specId = specId
 		self.auraIds = enabledAuras[self.specId]
 
-		if not self:LoadConditionsProhibitExecution() then
-			self:Enable()
-		else
+		if self.auraIds == nil or self:LoadConditionsProhibitExecution() then
 			self:Disable()
+		else
+			self:Enable()
 		end
 	elseif event == "PLAYER_REGEN_DISABLED" then
 		self:UpdateDisplay()

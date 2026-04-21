@@ -1,3 +1,7 @@
+## Version 1.1.1
+
+- fixed bugs surrounding usage of the addon when swapping specs and/or reloading on specs the addon shouldn't care about
+
 ## Version 1.1
 
 - added support for Germination on Restoration Druid (thanks to 0bi\_\_)
