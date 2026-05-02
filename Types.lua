@@ -66,6 +66,8 @@ AtonementEchoTrackerSaved = AtonementEchoTrackerSaved
 ---@field Font string
 ---@field FontFlags table<string, boolean>
 ---@field BorderStyle string
+---@field BorderSize number
+---@field BorderColor string
 ---@field ShowFractions boolean
 ---@field ShowDuration boolean
 ---@field CombatOnly boolean
