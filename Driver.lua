@@ -351,10 +351,16 @@ end
 function AtonementEchoTracker:ApplyBorderStyle()
 	local path = LibSharedMedia:Fetch(LibSharedMedia.MediaType.BORDER, AtonementEchoTrackerSaved.Settings.BorderStyle)
 	if path then
-		self.frame.Border:SetBackdrop({ edgeFile = path, edgeSize = 8 })
+		self.frame.Border:SetBackdrop({ edgeFile = path, edgeSize = AtonementEchoTrackerSaved.Settings.BorderSize })
+		self:ApplyBorderColor()
 	else
 		self.frame.Border:SetBackdrop(nil)
 	end
+end
+
+function AtonementEchoTracker:ApplyBorderColor()
+	local r, g, b, a = CreateColorFromHexString(AtonementEchoTrackerSaved.Settings.BorderColor):GetRGBA()
+	self.frame.Border:SetBackdropBorderColor(r, g, b, a)
 end
 
 function AtonementEchoTracker:ApplySettings()
@@ -390,8 +396,10 @@ function AtonementEchoTracker:OnSettingsChanged(key, value)
 		self:ApplyStackColor()
 	elseif key == Keys.DurationColor then
 		self:ApplyDurationColor()
-	elseif key == Keys.BorderStyle then
+	elseif key == Keys.BorderStyle or key == Keys.BorderSize then
 		self:ApplyBorderStyle()
+	elseif key == Keys.BorderColor then
+		self:ApplyBorderColor()
 	elseif key == Keys.ShowFractions then
 		self:SetShowFractions(value)
 	elseif key == Keys.DefaultState then
