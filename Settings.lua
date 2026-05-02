@@ -19,6 +19,8 @@ Private.Settings.Keys = {
 	Font = "FONT",
 	FontFlags = "FONT_FLAGS",
 	BorderStyle = "BORDER_STYLE",
+	BorderSize = "BORDER_SIZE",
+	BorderColor = "BORDER_COLOR",
 	ShowFractions = "SHOW_FRACTIONS",
 	ShowDuration = "SHOW_DURATION",
 	HideMask = "HIDE_MASK",
@@ -53,6 +55,8 @@ function Private.Settings.GetDefaultSettings()
 			[Private.Enum.FontFlags.SHADOW] = false,
 		},
 		BorderStyle = "None",
+		BorderSize = 1,
+		BorderColor = "FF000000",
 		ShowFractions = false,
 		ShowDuration = true,
 		CombatOnly = false,
@@ -81,6 +85,10 @@ function Private.Settings.GetSliderSettingsForKey(key)
 
 	if key == Private.Settings.Keys.IconZoom then
 		return { min = 0, max = 0.5, step = 0.01 }
+	end
+
+	if key == Private.Settings.Keys.BorderSize then
+		return { min = 1, max = 10, step = 1 }
 	end
 
 	if key == Private.Settings.Keys.StackCountOffsetX or key == Private.Settings.Keys.StackCountOffsetY then
@@ -151,5 +159,7 @@ function Private.Settings.GetDisplayOrder()
 		Private.Settings.Keys.DurationColor,
 		Private.Settings.Keys.StackColor,
 		Private.Settings.Keys.BorderStyle,
+		Private.Settings.Keys.BorderSize,
+		Private.Settings.Keys.BorderColor,
 	}
 end
