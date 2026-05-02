@@ -286,9 +286,9 @@ function AtonementEchoTracker:ApplyStackColor()
 end
 
 function AtonementEchoTracker:ApplyDurationColor()
-	self.frame.Cooldown.DurationText:SetTextColor(
-		CreateColorFromHexString(AtonementEchoTrackerSaved.Settings.DurationColor):GetRGBA()
-	)
+	local r, g, b, a = CreateColorFromHexString(AtonementEchoTrackerSaved.Settings.DurationColor):GetRGBA()
+	self.frame.Cooldown.DurationText:SetTextColor(r, g, b, a)
+	self.frame.Cooldown:GetCountdownFontString():SetTextColor(r, g, b, a)
 end
 
 function AtonementEchoTracker:SetShowFractions(showFractions)
@@ -383,9 +383,12 @@ function AtonementEchoTracker:OnSettingsChanged(key, value)
 		self:ApplyIconZoom()
 	elseif key == Keys.Font or key == Keys.StackFontSize or key == Keys.FontFlags then
 		self:ApplyStackFont()
+		self:ApplyStackColor()
 		self:ApplyDurationFont()
+		self:ApplyDurationColor()
 	elseif key == Keys.DurationFontSize then
 		self:ApplyDurationFont()
+		self:ApplyDurationColor()
 	elseif key == Keys.StackColor then
 		self:ApplyStackColor()
 	elseif key == Keys.DurationColor then

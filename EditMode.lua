@@ -246,7 +246,8 @@ function Private.SetupEditMode(editModeParentFrame)
 			---@param _ string
 			---@param color ColorMixin
 			local function Set(_, color)
-				local hex = color:GenerateHexColor()
+				local r, g, b, a = color:GetRGBA()
+				local hex = string.format("%02X%02X%02X%02X", a * 255, r * 255, g * 255, b * 255)
 				if AtonementEchoTrackerSaved.Settings.DurationColor ~= hex then
 					AtonementEchoTrackerSaved.Settings.DurationColor = hex
 					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, hex)
@@ -273,7 +274,8 @@ function Private.SetupEditMode(editModeParentFrame)
 			---@param _ string
 			---@param color ColorMixin
 			local function Set(_, color)
-				local hex = color:GenerateHexColor()
+				local r, g, b, a = color:GetRGBA()
+				local hex = string.format("%02X%02X%02X%02X", a * 255, r * 255, g * 255, b * 255)
 				if AtonementEchoTrackerSaved.Settings.StackColor ~= hex then
 					AtonementEchoTrackerSaved.Settings.StackColor = hex
 					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, hex)
