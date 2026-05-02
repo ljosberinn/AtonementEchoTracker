@@ -480,6 +480,56 @@ function Private.SetupEditMode(editModeParentFrame)
 				set = Set,
 			}
 		end
+		if key == Private.Settings.Keys.BorderSize then
+			local function Get(_)
+				return AtonementEchoTrackerSaved.Settings.BorderSize
+			end
+
+			local function Set(_, value)
+				if AtonementEchoTrackerSaved.Settings.BorderSize ~= value then
+					AtonementEchoTrackerSaved.Settings.BorderSize = value
+					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, value)
+				end
+			end
+
+			local sliderSettings = Private.Settings.GetSliderSettingsForKey(key)
+			---@type LibEditModeSlider
+			return {
+				name = "Border Size",
+				kind = Enum.EditModeSettingDisplayType.Slider,
+				default = defaults.BorderSize,
+				get = Get,
+				set = Set,
+				minValue = sliderSettings.min,
+				maxValue = sliderSettings.max,
+				valueStep = sliderSettings.step,
+			}
+		end
+
+		if key == Private.Settings.Keys.BorderColor then
+			local function Get(_)
+				return CreateColorFromHexString(AtonementEchoTrackerSaved.Settings.BorderColor)
+			end
+
+			local function Set(_, color)
+				local r, g, b, a = color:GetRGBA()
+				local hex = string.format("%02X%02X%02X%02X", a * 255, r * 255, g * 255, b * 255)
+				if AtonementEchoTrackerSaved.Settings.BorderColor ~= hex then
+					AtonementEchoTrackerSaved.Settings.BorderColor = hex
+					Private.EventRegistry:TriggerEvent(Private.Enum.Events.SETTING_CHANGED, key, hex)
+				end
+			end
+
+			---@type LibEditModeColorPicker
+			return {
+				name = "Border Color",
+				kind = LibEditMode.SettingType.ColorPicker,
+				default = CreateColorFromHexString(defaults.BorderColor),
+				get = Get,
+				set = Set,
+				hasOpacity = true,
+			}
+		end
 
 		if key == Private.Settings.Keys.HideMask then
 			local function Get(_)
